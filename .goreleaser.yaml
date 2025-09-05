@@ -21,6 +21,9 @@ builds:
     # We only build for js/wasm and we can just have the single WASM binary in
     # the dist directory.
     no_unique_dist_dir: true
+    hooks:
+      post:
+        - sh -c 'cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/wasm_exec.js'
 
 archives:
   - id: wasm-archive
