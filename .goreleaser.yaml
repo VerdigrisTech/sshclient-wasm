@@ -1,0 +1,49 @@
+project_name: sshclient-wasm
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  - id: wasm
+    main: ./main.go
+    binary: sshclient.wasm
+    goos:
+      - js
+    goarch:
+      - wasm
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+
+archives:
+  - id: wasm-archive
+    format: tar.gz
+    files:
+      - sshclient.wasm
+      - wasm_exec.js
+      - lib/**/*
+      - package.json
+      - README.md
+      - LICENSE
+
+release:
+  github:
+    owner: andrew
+    name: sshclient-wasm
+  prerelease: auto
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

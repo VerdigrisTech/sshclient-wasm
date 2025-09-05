@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Client WASM - xterm.js Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        h1 {
+            color: #569cd6;
+            border-bottom: 2px solid #3c3c3c;
+            padding-bottom: 10px;
+        }
+        .controls {
+            background: #2d2d30;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9cdcfe;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            color: #d4d4d4;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button:disabled {
+            background: #3c3c3c;
+            cursor: not-allowed;
+        }
+        .terminal-container {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            padding: 10px;
+            height: 600px;
+            position: relative;
+        }
+        #terminal {
+            height: 100%;
+            width: 100%;
+        }
+        .status-bar {
+            background: #007ACC;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px 4px 0 0;
+            margin: -10px -10px 10px -10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+        .status-connecting {
+            background-color: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        .status-connected {
+            background-color: #28a745;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible::before {
+            content: '▼ ';
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .collapsible.collapsed::before {
+            transform: rotate(-90deg);
+        }
+        .collapsible-content {
+            transition: max-height 0.2s ease-out;
+            overflow: hidden;
+            max-height: 1000px;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSH Client with xterm.js Terminal</h1>
+        
+        <div class="controls">
+            <h2 class="collapsible">Connection Settings</h2>
+            <div class="collapsible-content">
+                
+                <div class="form-group">
+                    <label for="transport-type">Transport Type</label>
+                    <select id="transport-type">
+                        <option value="websocket">WebSocket</option>
+                        <option value="aws-iot">AWS IoT Secure Tunnel</option>
+                    </select>
+                </div>
+                
+                <div id="websocket-settings">
+                    <div class="form-group">
+                        <label for="ws-url">WebSocket URL</label>
+                        <input type="text" id="ws-url" placeholder="wss://ssh-gateway.example.com" />
+                    </div>
+                </div>
+                
+                <div id="aws-iot-settings" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="aws-region">AWS Region</label>
+                            <input type="text" id="aws-region" placeholder="us-east-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="aws-token">Access Token</label>
+                            <input type="password" id="aws-token" placeholder="Tunnel access token" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="aws-mode">Client Mode</label>
+                            <select id="aws-mode">
+                                <option value="source">Source</option>
+                                <option value="destination">Destination</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="aws-protocol">Protocol Version</label>
+                            <select id="aws-protocol">
+                                <option value="V1">V1</option>
+                                <option value="V2" selected>V2</option>
+                                <option value="V3">V3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="aws-service">Service ID (optional)</label>
+                        <input type="text" id="aws-service" placeholder="SSH" />
+                    </div>
+                </div>
+                
+                <h3>SSH Settings</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ssh-host">Host</label>
+                        <input type="text" id="ssh-host" placeholder="example.com" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh-port">Port</label>
+                        <input type="number" id="ssh-port" value="22" />
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ssh-user">Username</label>
+                        <input type="text" id="ssh-user" placeholder="username" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh-password">Password</label>
+                        <input type="password" id="ssh-password" placeholder="password" />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ssh-key">Private Key (optional)</label>
+                    <textarea id="ssh-key" style="width: 100%; height: 100px; font-family: monospace;" placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"></textarea>
+                </div>
+                
+                <div>
+                    <button id="connect-btn">Connect</button>
+                    <button id="disconnect-btn" disabled>Disconnect</button>
+                    <button id="clear-btn">Clear Terminal</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="terminal-container">
+            <div class="status-bar">
+                <div>
+                    <span class="status-indicator status-disconnected" id="status-indicator"></span>
+                    <span id="status-text">Disconnected</span>
+                </div>
+                <div>
+                    <span id="session-info"></span>
+                </div>
+            </div>
+            <div id="terminal"></div>
+        </div>
+    </div>
+
+    <script src="/wasm_exec.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script type="module">
+        import { SSHClient, WebSocketTransport, SecureTunnelTransport } from '/lib/index.ts';
+
+        // Initialize xterm.js
+        const terminal = new Terminal({
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: 'Cascadia Code, Menlo, Monaco, Courier New, monospace',
+            theme: {
+                background: '#1e1e1e',
+                foreground: '#d4d4d4',
+                cursor: '#d4d4d4',
+                selection: 'rgba(255, 255, 255, 0.3)',
+                black: '#000000',
+                red: '#cd3131',
+                green: '#0dbc79',
+                yellow: '#e5e510',
+                blue: '#2472c8',
+                magenta: '#bc3fbc',
+                cyan: '#11a8cd',
+                white: '#e5e5e5',
+                brightBlack: '#666666',
+                brightRed: '#f14c4c',
+                brightGreen: '#23d18b',
+                brightYellow: '#f5f543',
+                brightBlue: '#3b8eea',
+                brightMagenta: '#d670d6',
+                brightCyan: '#29b8db',
+                brightWhite: '#e5e5e5'
+            }
+        });
+
+        const fitAddon = new FitAddon.FitAddon();
+        terminal.loadAddon(fitAddon);
+
+        // Mount terminal
+        terminal.open(document.getElementById('terminal'));
+        fitAddon.fit();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            fitAddon.fit();
+            if (currentSession) {
+                // Send terminal resize to SSH server
+                sendWindowChange();
+            }
+        });
+
+        // Get DOM elements
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const transportType = document.getElementById('transport-type');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const sessionInfo = document.getElementById('session-info');
+
+        let currentSession = null;
+        let currentTransport = null;
+        let shellStarted = false;
+
+        // Helper to update status
+        function updateStatus(status, text = null) {
+            statusIndicator.className = 'status-indicator';
+            switch(status) {
+                case 'connected':
+                    statusIndicator.classList.add('status-connected');
+                    statusText.textContent = text || 'Connected';
+                    break;
+                case 'connecting':
+                    statusIndicator.classList.add('status-connecting');
+                    statusText.textContent = text || 'Connecting...';
+                    break;
+                case 'disconnected':
+                default:
+                    statusIndicator.classList.add('status-disconnected');
+                    statusText.textContent = text || 'Disconnected';
+                    break;
+            }
+        }
+
+        // Write to terminal
+        function writeToTerminal(text, type = 'info') {
+            const colors = {
+                error: '\x1b[31m',   // Red
+                success: '\x1b[32m', // Green
+                warning: '\x1b[33m', // Yellow
+                info: '\x1b[36m',    // Cyan
+                reset: '\x1b[0m'
+            };
+            
+            const color = colors[type] || colors.info;
+            terminal.writeln(`${color}${text}${colors.reset}`);
+        }
+
+        // Send window change request to SSH server
+        async function sendWindowChange() {
+            if (!currentSession || !shellStarted) return;
+            
+            const cols = terminal.cols;
+            const rows = terminal.rows;
+            
+            try {
+                await currentSession.resizeTerminal(cols, rows);
+                console.log(`Terminal resized to ${cols}x${rows}`);
+            } catch (error) {
+                console.error('Failed to resize terminal:', error);
+            }
+        }
+
+        // Toggle transport settings
+        transportType.addEventListener('change', () => {
+            document.getElementById('websocket-settings').style.display = 
+                transportType.value === 'websocket' ? 'block' : 'none';
+            document.getElementById('aws-iot-settings').style.display = 
+                transportType.value === 'aws-iot' ? 'block' : 'none';
+        });
+
+        // Clear terminal
+        clearBtn.addEventListener('click', () => {
+            terminal.clear();
+        });
+
+        // Make sections collapsible
+        document.querySelectorAll('.collapsible').forEach(elem => {
+            elem.addEventListener('click', () => {
+                elem.classList.toggle('collapsed');
+                elem.nextElementSibling.classList.toggle('collapsed');
+            });
+        });
+
+        // Connect
+        connectBtn.addEventListener('click', async () => {
+            try {
+                connectBtn.disabled = true;
+                updateStatus('connecting');
+                terminal.clear();
+                
+                writeToTerminal('Initializing SSH Client...', 'info');
+                
+                // Initialize WASM
+                await SSHClient.initialize('/sshclient.wasm');
+                writeToTerminal('WASM module initialized', 'success');
+
+                // Create transport
+                const transportId = `transport-${Date.now()}`;
+                
+                if (transportType.value === 'websocket') {
+                    const url = document.getElementById('ws-url').value || 'wss://localhost:8080';
+                    currentTransport = new WebSocketTransport(transportId, url, ['ssh']);
+                    writeToTerminal(`Connecting via WebSocket to ${url}`, 'info');
+                } else if (transportType.value === 'aws-iot') {
+                    const accessToken = document.getElementById('aws-token').value;
+                    if (!accessToken) {
+                        writeToTerminal('Error: Access token is required for AWS IoT Secure Tunnel', 'error');
+                        connectBtn.disabled = false;
+                        updateStatus('disconnected');
+                        return;
+                    }
+                    
+                    const config = {
+                        region: document.getElementById('aws-region').value || 'us-east-1',
+                        accessToken: accessToken,
+                        clientMode: document.getElementById('aws-mode').value,
+                        serviceId: document.getElementById('aws-service').value || undefined,
+                        protocol: document.getElementById('aws-protocol').value || 'V2'
+                    };
+                    
+                    currentTransport = new SecureTunnelTransport(transportId, config);
+                    writeToTerminal(`Connecting via AWS IoT Secure Tunnel (${config.clientMode} mode)`, 'info');
+                }
+
+                // SSH connection options
+                const sshOptions = {
+                    host: document.getElementById('ssh-host').value || 'localhost',
+                    port: parseInt(document.getElementById('ssh-port').value) || 22,
+                    user: document.getElementById('ssh-user').value || 'user',
+                    password: document.getElementById('ssh-password').value || undefined,
+                    privateKey: document.getElementById('ssh-key').value || undefined
+                };
+
+                writeToTerminal(`Connecting to ${sshOptions.user}@${sshOptions.host}:${sshOptions.port}...`, 'info');
+
+                // Connect with callbacks
+                currentSession = await SSHClient.connect(
+                    sshOptions,
+                    currentTransport,
+                    {
+                        onPacketReceive: (data, metadata) => {
+                            // Handle incoming SSH data
+                            if (metadata.type === 'data') {
+                                // Write received data directly to terminal
+                                terminal.write(new Uint8Array(data));
+                            }
+                        },
+                        onStateChange: (state) => {
+                            if (state === 'connected') {
+                                updateStatus('connected', `Connected to ${sshOptions.host}`);
+                                sessionInfo.textContent = `${sshOptions.user}@${sshOptions.host}`;
+                            } else if (state === 'disconnected' || state === 'error') {
+                                updateStatus('disconnected');
+                                sessionInfo.textContent = '';
+                                shellStarted = false;
+                            }
+                        }
+                    }
+                );
+
+                writeToTerminal('SSH connection established!', 'success');
+                terminal.clear(); // Clear the terminal for the shell session
+                
+                // Setup terminal input handler before starting shell
+                const encoder = new TextEncoder();
+                terminal.onData((data) => {
+                    if (currentSession && shellStarted) {
+                        // Send typed data to SSH session
+                        currentSession.send(encoder.encode(data));
+                    }
+                });
+                
+                // Start the shell - the first send will trigger shell initialization
+                shellStarted = true;
+                
+                // Set initial terminal size
+                await sendWindowChange();
+                
+                // Send an initial newline to trigger the shell prompt
+                await currentSession.send(encoder.encode('\n'));
+                
+                updateStatus('connected', `Connected to ${sshOptions.host}`);
+                disconnectBtn.disabled = false;
+
+            } catch (error) {
+                writeToTerminal(`Error: ${error.message}`, 'error');
+                connectBtn.disabled = false;
+                updateStatus('disconnected');
+            }
+        });
+
+        // Disconnect
+        disconnectBtn.addEventListener('click', async () => {
+            try {
+                disconnectBtn.disabled = true;
+                writeToTerminal('Disconnecting...', 'warning');
+                
+                if (currentSession) {
+                    await currentSession.disconnect();
+                    currentSession = null;
+                }
+                
+                shellStarted = false;
+                updateStatus('disconnected');
+                writeToTerminal('Disconnected', 'info');
+                connectBtn.disabled = false;
+            } catch (error) {
+                writeToTerminal(`Error disconnecting: ${error.message}`, 'error');
+            }
+        });
+
+        // Initial setup
+        writeToTerminal('SSH Terminal Ready', 'success');
+        writeToTerminal('Configure your connection settings and click Connect', 'info');
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+syntax = "proto3";
+package com.amazonaws.iot.securedtunneling;
+
+option java_outer_classname = "ProtocolV3Message";
+option optimize_for = LITE_RUNTIME;
+
+message ProtocolV3Message {
+  Type type         = 1;
+  int32 streamId    = 2;
+  bool ignorable    = 3;
+  bytes payload     = 4;
+  string serviceId  = 5;
+  repeated string availableServiceIds = 6;
+  uint32 connectionId = 7;
+
+  enum Type {
+    UNKNOWN = 0;
+    DATA = 1;
+    STREAM_START = 2;
+    STREAM_RESET = 3;
+    SESSION_RESET = 4;
+    SERVICE_IDS = 5;
+    CONNECTION_START = 6;
+    CONNECTION_RESET = 7;
+  }
+}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Client WASM - Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 50px;
+            opacity: 0.95;
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .example-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .example-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .example-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        .example-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .example-description {
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .feature-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        .status {
+            margin-top: 50px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+        .status-item {
+            display: inline-block;
+            margin: 0 15px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .coming-soon .example-title::after {
+            content: " (Coming Soon)";
+            font-size: 0.7em;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 SSH Client WASM</h1>
+        <div class="subtitle">
+            WebAssembly-powered SSH client for the browser with transport flexibility
+        </div>
+
+        <div class="examples-grid">
+            <a href="./basic/" class="example-card">
+                <div class="example-icon">📝</div>
+                <div class="example-title">Basic Example</div>
+                <div class="example-description">
+                    Simple connection interface with logging output. Perfect for testing connections and debugging.
+                </div>
+                <div class="features">
+                    <span class="feature-tag">WebSocket</span>
+                    <span class="feature-tag">AWS IoT</span>
+                    <span class="feature-tag">Logging</span>
+                </div>
+            </a>
+
+            <a href="./xterm/" class="example-card">
+                <div class="example-icon">💻</div>
+                <div class="example-title">Terminal (xterm.js)</div>
+                <div class="example-description">
+                    Full terminal emulator with interactive shell. Experience a native terminal feel in your browser.
+                </div>
+                <div class="features">
+                    <span class="feature-tag">Interactive</span>
+                    <span class="feature-tag">xterm.js</span>
+                    <span class="feature-tag">Shell</span>
+                </div>
+            </a>
+
+            <div class="example-card coming-soon">
+                <div class="example-icon">🔄</div>
+                <div class="example-title">File Transfer</div>
+                <div class="example-description">
+                    Upload and download files through SSH with progress tracking and drag-and-drop support.
+                </div>
+                <div class="features">
+                    <span class="feature-tag">SFTP</span>
+                    <span class="feature-tag">Progress</span>
+                    <span class="feature-tag">Drag & Drop</span>
+                </div>
+            </div>
+
+            <div class="example-card coming-soon">
+                <div class="example-icon">🎨</div>
+                <div class="example-title">Custom Transport</div>
+                <div class="example-description">
+                    Implement your own transport layer for proprietary protocols or special networking requirements.
+                </div>
+                <div class="features">
+                    <span class="feature-tag">Custom</span>
+                    <span class="feature-tag">Extensible</span>
+                    <span class="feature-tag">API</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="status">
+            <div class="status-item">
+                <span class="status-indicator"></span>
+                <span>WASM Module Ready</span>
+            </div>
+            <div class="status-item">
+                <span class="status-indicator"></span>
+                <span>Examples Available</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive behavior
+        document.querySelectorAll('.example-card').forEach(card => {
+            if (!card.classList.contains('coming-soon')) {
+                card.addEventListener('click', (e) => {
+                    // Smooth navigation effect
+                    e.preventDefault();
+                    const href = card.getAttribute('href');
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 200);
+                });
+            }
+        });
+
+        // Check if WASM is supported
+        if (typeof WebAssembly === 'object') {
+            console.log('WebAssembly is supported in this browser');
+        } else {
+            document.querySelector('.status').innerHTML = '<div style="color: #ef4444;">⚠️ WebAssembly is not supported in this browser</div>';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Client WASM - Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        h1 {
+            color: #569cd6;
+            border-bottom: 2px solid #3c3c3c;
+            padding-bottom: 10px;
+        }
+        .controls {
+            background: #2d2d30;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9cdcfe;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            color: #d4d4d4;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button:disabled {
+            background: #3c3c3c;
+            cursor: not-allowed;
+        }
+        #terminal {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            padding: 10px;
+            height: 500px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-info { color: #9cdcfe; }
+        .log-success { color: #4ec9b0; }
+        .log-error { color: #f48771; }
+        .log-warning { color: #ce9178; }
+        .log-debug { color: #808080; }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSH Client WebAssembly Demo</h1>
+        
+        <div class="controls">
+            <h2>Connection Settings</h2>
+            
+            <div class="form-group">
+                <label for="transport-type">Transport Type</label>
+                <select id="transport-type">
+                    <option value="websocket">WebSocket</option>
+                    <option value="aws-iot">AWS IoT Secure Tunnel</option>
+                    <option value="custom">Custom Transport</option>
+                </select>
+            </div>
+            
+            <div id="websocket-settings">
+                <div class="form-group">
+                    <label for="ws-url">WebSocket URL</label>
+                    <input type="text" id="ws-url" placeholder="wss://ssh-gateway.example.com" />
+                </div>
+            </div>
+            
+            <div id="aws-iot-settings" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="aws-region">AWS Region</label>
+                        <input type="text" id="aws-region" placeholder="us-east-1" />
+                    </div>
+                    <div class="form-group">
+                        <label for="aws-token">Access Token</label>
+                        <input type="password" id="aws-token" placeholder="Tunnel access token" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="aws-mode">Client Mode</label>
+                        <select id="aws-mode">
+                            <option value="source">Source</option>
+                            <option value="destination">Destination</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="aws-protocol">Protocol Version</label>
+                        <select id="aws-protocol">
+                            <option value="V1">V1</option>
+                            <option value="V2" selected>V2</option>
+                            <option value="V3">V3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="aws-service">Service ID (optional)</label>
+                    <input type="text" id="aws-service" placeholder="SSH" />
+                </div>
+            </div>
+            
+            <h3>SSH Settings</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ssh-host">Host</label>
+                    <input type="text" id="ssh-host" placeholder="example.com" />
+                </div>
+                <div class="form-group">
+                    <label for="ssh-port">Port</label>
+                    <input type="number" id="ssh-port" value="22" />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ssh-user">Username</label>
+                    <input type="text" id="ssh-user" placeholder="username" />
+                </div>
+                <div class="form-group">
+                    <label for="ssh-password">Password</label>
+                    <input type="password" id="ssh-password" placeholder="password" />
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="ssh-key">Private Key (optional)</label>
+                <textarea id="ssh-key" style="width: 100%; height: 100px; background: #1e1e1e; border: 1px solid #3c3c3c; color: #d4d4d4; border-radius: 4px; padding: 8px; font-family: monospace;" placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"></textarea>
+            </div>
+            
+            <div>
+                <button id="connect-btn">Connect</button>
+                <button id="disconnect-btn" disabled>Disconnect</button>
+                <button id="clear-btn">Clear Log</button>
+                <label style="display: inline-block; margin-left: 20px;">
+                    <input type="checkbox" id="debug-mode" /> Show packet flow
+                </label>
+            </div>
+        </div>
+        
+        <div id="terminal"></div>
+    </div>
+
+    <script src="/wasm_exec.js" onload="console.log('wasm_exec.js loaded')" onerror="console.error('Failed to load wasm_exec.js')"></script>
+    <script type="module">
+        import { SSHClient, WebSocketTransport, SecureTunnelTransport, CustomTransport } from '/lib/index.ts';
+
+        const terminal = document.getElementById('terminal');
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const debugMode = document.getElementById('debug-mode');
+        const transportType = document.getElementById('transport-type');
+
+        let currentSession = null;
+        let currentTransport = null;
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            terminal.appendChild(entry);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Toggle transport settings based on selection
+        transportType.addEventListener('change', () => {
+            document.getElementById('websocket-settings').style.display = 
+                transportType.value === 'websocket' ? 'block' : 'none';
+            document.getElementById('aws-iot-settings').style.display = 
+                transportType.value === 'aws-iot' ? 'block' : 'none';
+        });
+
+        // Clear log
+        clearBtn.addEventListener('click', () => {
+            terminal.innerHTML = '';
+            log('Log cleared', 'info');
+        });
+
+        // Connect
+        connectBtn.addEventListener('click', async () => {
+            try {
+                connectBtn.disabled = true;
+                
+                // Check if Go runtime is loaded
+                if (typeof window.Go === 'undefined') {
+                    log('Error: Go runtime not available. Please refresh the page.', 'error');
+                    connectBtn.disabled = false;
+                    return;
+                }
+                
+                log('Initializing WASM module...', 'info');
+                
+                // Initialize WASM - use public directory path
+                await SSHClient.initialize('/sshclient.wasm');
+                log('WASM module initialized', 'success');
+
+                // Create transport based on selection
+                const transportId = `transport-${Date.now()}`;
+                
+                if (transportType.value === 'websocket') {
+                    const url = document.getElementById('ws-url').value || 'wss://localhost:8080';
+                    currentTransport = new WebSocketTransport(transportId, url, ['ssh']);
+                    log(`Creating WebSocket transport to ${url}`, 'info');
+                } else if (transportType.value === 'aws-iot') {
+                    const accessToken = document.getElementById('aws-token').value;
+                    if (!accessToken) {
+                        log('Error: Access token is required for AWS IoT Secure Tunnel', 'error');
+                        connectBtn.disabled = false;
+                        return;
+                    }
+                    
+                    const config = {
+                        region: document.getElementById('aws-region').value || 'us-east-1',
+                        accessToken: accessToken,
+                        clientMode: document.getElementById('aws-mode').value,
+                        serviceId: document.getElementById('aws-service').value || undefined,
+                        protocol: document.getElementById('aws-protocol').value || 'V2'
+                    };
+                    
+                    log(`Creating AWS IoT Secure Tunnel transport with token: ${accessToken.substring(0, 10)}...`, 'info');
+                    currentTransport = new SecureTunnelTransport(transportId, config);
+                    log(`AWS IoT Secure Tunnel transport created`, 'info');
+                } else {
+                    // Custom transport example
+                    currentTransport = new CustomTransport(
+                        transportId,
+                        async () => { log('Custom transport connected', 'info'); },
+                        async () => { log('Custom transport disconnected', 'info'); },
+                        async (data) => { log(`Custom transport sending ${data.length} bytes`, 'debug'); }
+                    );
+                    log('Creating custom transport', 'info');
+                }
+
+                // SSH connection options
+                const sshOptions = {
+                    host: document.getElementById('ssh-host').value || 'localhost',
+                    port: parseInt(document.getElementById('ssh-port').value) || 22,
+                    user: document.getElementById('ssh-user').value || 'user',
+                    password: document.getElementById('ssh-password').value || undefined,
+                    privateKey: document.getElementById('ssh-key').value || undefined
+                };
+
+                log(`Connecting to ${sshOptions.user}@${sshOptions.host}:${sshOptions.port}...`, 'info');
+
+                // Connect with callbacks
+                currentSession = await SSHClient.connect(
+                    sshOptions,
+                    currentTransport,
+                    {
+                        onPacketSend: (data, metadata) => {
+                            if (debugMode.checked) {
+                                log(`→ SSH packet sent: ${metadata.packetType} (${metadata.size} bytes)`, 'debug');
+                            }
+                        },
+                        onPacketReceive: (data, metadata) => {
+                            if (debugMode.checked) {
+                                log(`← SSH packet received: ${metadata.packetType} (${metadata.size} bytes)`, 'debug');
+                            }
+                        },
+                        onStateChange: (state) => {
+                            log(`Connection state: ${state}`, 'warning');
+                        }
+                    }
+                );
+
+                log('SSH connection established!', 'success');
+                disconnectBtn.disabled = false;
+
+                // Example: Send a command
+                const encoder = new TextEncoder();
+                await currentSession.send(encoder.encode('ls -la\n'));
+                log('Sent command: ls -la', 'info');
+
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                connectBtn.disabled = false;
+            }
+        });
+
+        // Disconnect
+        disconnectBtn.addEventListener('click', async () => {
+            try {
+                disconnectBtn.disabled = true;
+                log('Disconnecting...', 'info');
+                
+                if (currentSession) {
+                    await currentSession.disconnect();
+                    currentSession = null;
+                }
+                
+                log('Disconnected', 'success');
+                connectBtn.disabled = false;
+            } catch (error) {
+                log(`Error disconnecting: ${error.message}`, 'error');
+            }
+        });
+
+        // Initial log
+        log('SSH Client WebAssembly Demo Ready', 'success');
+        log('Configure your connection settings and click Connect', 'info');
+        
+        // Check Go runtime on load
+        setTimeout(async () => {
+            if (typeof window.Go !== 'undefined') {
+                log('Go runtime loaded successfully', 'debug');
+            } else {
+                log('Warning: Go runtime not detected. WASM initialization may fail.', 'warning');
+                // Try to debug the issue
+                try {
+                    const response = await fetch('./dist/wasm_exec.js');
+                    if (response.ok) {
+                        const text = await response.text();
+                        log(`wasm_exec.js fetch successful, size: ${text.length} bytes`, 'debug');
+                        // Check if it starts with expected content
+                        if (text.includes('<!DOCTYPE')) {
+                            log('ERROR: wasm_exec.js is returning HTML instead of JavaScript!', 'error');
+                        } else if (text.includes('function Go()') || text.includes('class Go')) {
+                            log('wasm_exec.js content looks correct but not executing', 'warning');
+                        }
+                    } else {
+                        log(`Failed to fetch wasm_exec.js: ${response.status}`, 'error');
+                    }
+                } catch (e) {
+                    log(`Error fetching wasm_exec.js: ${e.message}`, 'error');
+                }
+            }
+        }, 100);
+    </script>
+</body>
+</html>
