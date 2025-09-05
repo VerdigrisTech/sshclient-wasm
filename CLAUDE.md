@@ -104,3 +104,11 @@ graph TB
 - Go 1.23+
 - Node.js 22+
 - Pnpm 10+
+
+### Running the Go code during development
+
+Running the Go code during development can be done with `go run main.go`.
+
+### Building the WASM binary
+
+Use `goreleaser build --snapshot --clean`.
