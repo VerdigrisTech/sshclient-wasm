@@ -1,3 +1,4 @@
+version: 2
 project_name: sshclient-wasm
 
 before:
@@ -6,9 +7,9 @@ before:
     - go mod download
 
 builds:
-  - id: wasm
+  - id: sshclient
     main: ./main.go
-    binary: sshclient.wasm
+    binary: sshclient
     goos:
       - js
     goarch:
@@ -17,6 +18,9 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
+    # We only build for js/wasm and we can just have the single WASM binary in
+    # the dist directory.
+    no_unique_dist_dir: true
 
 archives:
   - id: wasm-archive
@@ -31,7 +35,7 @@ archives:
 
 release:
   github:
-    owner: andrew
+    owner: VerdigrisTech
     name: sshclient-wasm
   prerelease: auto
 
