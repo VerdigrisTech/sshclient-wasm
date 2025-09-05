@@ -158,6 +158,39 @@ func connect(this js.Value, args []js.Value) interface{} {
 				
 				return promiseConstructor.New(disconnectHandler)
 			}),
+			"resizeTerminal": js.FuncOf(func(this js.Value, resizeArgs []js.Value) interface{} {
+				// Create a Promise for async resize operation
+				promiseConstructor := js.Global().Get("Promise")
+				
+				// Create handler function for the Promise
+				var resizeHandler js.Func
+				resizeHandler = js.FuncOf(func(this js.Value, promiseArgs []js.Value) interface{} {
+					defer resizeHandler.Release()
+					
+					resolve := promiseArgs[0]
+					reject := promiseArgs[1]
+					
+					// Run resize in a goroutine to avoid blocking
+					go func() {
+						if len(resizeArgs) >= 2 {
+							cols := resizeArgs[0].Int()
+							rows := resizeArgs[1].Int()
+							err := client.ResizeTerminal(cols, rows)
+							if err != nil {
+								reject.Invoke(js.ValueOf(err.Error()))
+								return
+							}
+							resolve.Invoke(js.Null())
+						} else {
+							reject.Invoke(js.ValueOf("missing cols or rows parameters"))
+						}
+					}()
+					
+					return nil
+				})
+				
+				return promiseConstructor.New(resizeHandler)
+			}),
 		}
 		
 		resolve.Invoke(js.ValueOf(result))

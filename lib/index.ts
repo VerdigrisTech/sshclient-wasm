@@ -43,6 +43,7 @@ export interface SSHSession {
   sessionId: string;
   send: (data: Uint8Array) => Promise<void>;
   disconnect: () => Promise<void>;
+  resizeTerminal: (cols: number, rows: number) => Promise<void>;
 }
 
 export class SSHClient {
@@ -148,6 +149,9 @@ export class SSHClient {
       disconnect: async () => {
         await session.disconnect();
         await this.transportManager.closeTransport(transport.id);
+      },
+      resizeTerminal: async (cols: number, rows: number) => {
+        await session.resizeTerminal(cols, rows);
       },
     };
   }
