@@ -24,7 +24,8 @@ builds:
 
 archives:
   - id: wasm-archive
-    format: tar.gz
+    formats:
+      - tar.gz
     files:
       - sshclient.wasm
       - wasm_exec.js
@@ -43,7 +44,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
