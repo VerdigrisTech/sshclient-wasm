@@ -1,15 +1,19 @@
-import { Transport } from './transport';
-import * as protobuf from './aws-iot-tunnel/protobuf-messages';
+import { Transport } from "./transport";
+import * as protobuf from "./aws-iot-tunnel/protobuf-messages";
 
 // Get the message classes from the protobuf namespace
-const ProtocolV1Message = protobuf.com.amazonaws.iot.securedtunneling.ProtocolV1Message;
-const ProtocolV2Message = protobuf.com.amazonaws.iot.securedtunneling.ProtocolV2Message;
-const ProtocolV3Message = protobuf.com.amazonaws.iot.securedtunneling.ProtocolV3Message;
+const ProtocolV1Message =
+  protobuf.com.amazonaws.iot.securedtunneling.ProtocolV1Message;
+const ProtocolV2Message =
+  protobuf.com.amazonaws.iot.securedtunneling.ProtocolV2Message;
+const ProtocolV3Message =
+  protobuf.com.amazonaws.iot.securedtunneling.ProtocolV3Message;
 
 // Type definitions for the tunnel messages
-export type TunnelMessage = protobuf.com.amazonaws.iot.securedtunneling.IProtocolV1Message | 
-                            protobuf.com.amazonaws.iot.securedtunneling.IProtocolV2Message | 
-                            protobuf.com.amazonaws.iot.securedtunneling.IProtocolV3Message;
+export type TunnelMessage =
+  | protobuf.com.amazonaws.iot.securedtunneling.IProtocolV1Message
+  | protobuf.com.amazonaws.iot.securedtunneling.IProtocolV2Message
+  | protobuf.com.amazonaws.iot.securedtunneling.IProtocolV3Message;
 
 // Re-export message types for external use
 export const TunnelMessageType = {
@@ -23,15 +27,16 @@ export const TunnelMessageType = {
   CONNECTION_RESET: 7,
 } as const;
 
-export type TunnelMessageTypeEnum = typeof TunnelMessageType[keyof typeof TunnelMessageType];
+export type TunnelMessageTypeEnum =
+  (typeof TunnelMessageType)[keyof typeof TunnelMessageType];
 
 // AWS IoT Secure Tunnel configuration
 export interface SecureTunnelConfig {
   region: string;
   accessToken: string;
-  clientMode: 'source' | 'destination';
-  serviceId?: string;  // Optional service identifier for multiplexed tunnels
-  protocol?: 'V1' | 'V2' | 'V3';  // Protocol version
+  clientMode: "source" | "destination";
+  serviceId?: string; // Optional service identifier for multiplexed tunnels
+  protocol?: "V1" | "V2" | "V3"; // Protocol version
 }
 
 /**
@@ -45,10 +50,13 @@ export class SecureTunnelTransport implements Transport {
   private streamId: number = 1;
   private connectionId: number = 1;
   private isConnected: boolean = false;
-  private tunnelReady: boolean = false;  // Track if tunnel handshake is complete
+  private tunnelReady: boolean = false; // Track if tunnel handshake is complete
   private messageQueue: Uint8Array[] = [];
   private receiveBuffer: Uint8Array = new Uint8Array(0);
-  private messageClass: typeof ProtocolV1Message | typeof ProtocolV2Message | typeof ProtocolV3Message;
+  private messageClass:
+    | typeof ProtocolV1Message
+    | typeof ProtocolV2Message
+    | typeof ProtocolV3Message;
 
   public id: string;
   public onData?: (data: Uint8Array) => void;
@@ -58,19 +66,19 @@ export class SecureTunnelTransport implements Transport {
   constructor(id: string, config: SecureTunnelConfig) {
     this.id = id;
     this.config = {
-      protocol: 'V2',
-      ...config
+      protocol: "V2",
+      ...config,
     };
 
     // Set the appropriate message class based on protocol version
     switch (this.config.protocol) {
-      case 'V1':
+      case "V1":
         this.messageClass = ProtocolV1Message;
         break;
-      case 'V2':
+      case "V2":
         this.messageClass = ProtocolV2Message;
         break;
-      case 'V3':
+      case "V3":
         this.messageClass = ProtocolV3Message;
         break;
       default:
@@ -85,8 +93,8 @@ export class SecureTunnelTransport implements Transport {
     const wsUrl = this.buildWebSocketUrl();
 
     // Format protocol version as AWS IoT subprotocol string
-    const protocolVersion = this.config.protocol || 'V2';
-    const versionNumber = protocolVersion.replace('V', '');
+    const protocolVersion = this.config.protocol || "V2";
+    const versionNumber = protocolVersion.replace("V", "");
     const subprotocol = `aws.iot.securetunneling-${versionNumber}.0`;
     console.log(`Connecting with WebSocket subprotocol: ${subprotocol}`);
 
@@ -94,39 +102,47 @@ export class SecureTunnelTransport implements Transport {
       try {
         // Pass protocol version as second argument to WebSocket constructor
         this.ws = new WebSocket(wsUrl, subprotocol);
-        this.ws.binaryType = 'arraybuffer';
+        this.ws.binaryType = "arraybuffer";
 
         this.ws.onopen = () => {
-          console.log('AWS IoT Secure Tunnel WebSocket connected');
+          console.log("AWS IoT Secure Tunnel WebSocket connected");
           this.isConnected = true;
 
           // Different message flow based on client mode
-          if (this.config.clientMode === 'destination') {
+          if (this.config.clientMode === "destination") {
             // Destination mode: Send SERVICE_IDS first if serviceId is configured
             if (this.config.serviceId) {
-              console.log('Sending SERVICE_IDS message with serviceId:', this.config.serviceId);
+              console.log(
+                "Sending SERVICE_IDS message with serviceId:",
+                this.config.serviceId
+              );
               this.sendControlMessage(TunnelMessageType.SERVICE_IDS, {
-                availableServiceIds: [this.config.serviceId]
+                availableServiceIds: [this.config.serviceId],
               });
             }
             // Destination waits for STREAM_START from source
           } else {
             // Source mode: Send STREAM_START to initiate the stream
-            console.log('Source mode: Sending STREAM_START with streamId:', this.streamId);
+            console.log(
+              "Source mode: Sending STREAM_START with streamId:",
+              this.streamId
+            );
             this.sendControlMessage(TunnelMessageType.STREAM_START, {
               streamId: this.streamId,
-              serviceId: this.config.serviceId
+              serviceId: this.config.serviceId,
             });
           }
 
           // Don't process queued messages yet - wait for tunnel to be ready
-          console.log('Waiting for tunnel handshake to complete...');
+          console.log("Waiting for tunnel handshake to complete...");
 
           resolve();
         };
 
         this.ws.onerror = (event) => {
-          const error = new Error('WebSocket error connecting to AWS IoT Secure Tunnel');
+          const error = new Error(
+            "WebSocket error connecting to AWS IoT Secure Tunnel"
+          );
           if (this.onError) {
             this.onError(error);
           }
@@ -140,10 +156,10 @@ export class SecureTunnelTransport implements Transport {
         };
 
         this.ws.onclose = (event) => {
-          console.log('AWS IoT Secure Tunnel WebSocket closed', {
+          console.log("AWS IoT Secure Tunnel WebSocket closed", {
             code: event.code,
             reason: event.reason,
-            wasClean: event.wasClean
+            wasClean: event.wasClean,
           });
           this.isConnected = false;
           this.tunnelReady = false;
@@ -164,7 +180,7 @@ export class SecureTunnelTransport implements Transport {
     if (this.ws) {
       // Send STREAM_RESET before closing
       this.sendControlMessage(TunnelMessageType.STREAM_RESET, {
-        streamId: this.streamId
+        streamId: this.streamId,
       });
 
       this.ws.close();
@@ -180,7 +196,12 @@ export class SecureTunnelTransport implements Transport {
   async send(data: Uint8Array): Promise<void> {
     if (!this.isConnected || !this.ws || !this.tunnelReady) {
       // Queue the message if tunnel is not ready yet
-      console.log('Queueing message, tunnel not ready. Connected:', this.isConnected, 'Ready:', this.tunnelReady);
+      console.log(
+        "Queueing message, tunnel not ready. Connected:",
+        this.isConnected,
+        "Ready:",
+        this.tunnelReady
+      );
       this.messageQueue.push(data);
       return;
     }
@@ -210,8 +231,10 @@ export class SecureTunnelTransport implements Transport {
 
     // Check if access token exists
     if (!this.config.accessToken) {
-      console.error('AWS IoT Secure Tunnel: Access token is missing or empty');
-      throw new Error('Access token is required for AWS IoT Secure Tunnel connection');
+      console.error("AWS IoT Secure Tunnel: Access token is missing or empty");
+      throw new Error(
+        "Access token is required for AWS IoT Secure Tunnel connection"
+      );
     }
 
     // URL encode the access token
@@ -221,8 +244,8 @@ export class SecureTunnelTransport implements Transport {
     // local-proxy-mode parameter indicates the client mode (source or destination)
     const url = `${endpoint}?local-proxy-mode=${this.config.clientMode}&access-token=${encodedToken}`;
 
-    console.log('AWS IoT Secure Tunnel URL:', url.substring(0, 100) + '...');
-    console.log('Protocol version:', this.config.protocol || 'V2');
+    console.log("AWS IoT Secure Tunnel URL:", url.substring(0, 100) + "...");
+    console.log("Protocol version:", this.config.protocol || "V2");
     return url;
   }
 
@@ -232,16 +255,21 @@ export class SecureTunnelTransport implements Transport {
   private sendControlMessage(type: number, options: any = {}): void {
     const message: any = {
       type,
-      ...options
+      ...options,
     };
 
-    console.log('Sending control message:', {
+    console.log("Sending control message:", {
       type: this.getMessageTypeName(type),
-      ...options
+      ...options,
     });
 
     const encoded = this.encodeMessage(message);
-    console.log('Encoded message bytes:', Array.from(encoded).map(b => b.toString(16).padStart(2, '0')).join(' '));
+    console.log(
+      "Encoded message bytes:",
+      Array.from(encoded)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ")
+    );
 
     this.sendFrame(encoded);
   }
@@ -259,25 +287,26 @@ export class SecureTunnelTransport implements Transport {
       const message: any = {
         type: TunnelMessageType.DATA,
         streamId: this.streamId,
-        payload: chunk
+        payload: chunk,
       };
 
       // Add serviceId for multiplexed tunnels (V2 and V3 only)
-      if (this.config.serviceId && this.config.protocol !== 'V1') {
+      if (this.config.serviceId && this.config.protocol !== "V1") {
         message.serviceId = this.config.serviceId;
       }
 
       // Add connectionId for V3 protocol
-      if (this.config.protocol === 'V3') {
+      if (this.config.protocol === "V3") {
         message.connectionId = this.connectionId;
       }
 
-      console.log('Sending DATA message with:', {
-        type: 'DATA',
+      console.log("Sending DATA message with:", {
+        type: "DATA",
         streamId: this.streamId,
         serviceId: this.config.serviceId,
-        connectionId: this.config.protocol === 'V3' ? this.connectionId : undefined,
-        payloadSize: chunk.length
+        connectionId:
+          this.config.protocol === "V3" ? this.connectionId : undefined,
+        payloadSize: chunk.length,
       });
 
       const encoded = this.encodeMessage(message);
@@ -290,7 +319,7 @@ export class SecureTunnelTransport implements Transport {
    */
   private sendFrame(data: Uint8Array): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.warn('Cannot send frame: WebSocket not open');
+      console.warn("Cannot send frame: WebSocket not open");
       return;
     }
 
@@ -300,8 +329,18 @@ export class SecureTunnelTransport implements Transport {
     view.setUint16(0, data.length, false); // false = big-endian
     frame.set(data, 2);
 
-    console.log('Sending frame with length:', data.length, 'Total frame size:', frame.length);
-    console.log('Frame bytes (first 20):', Array.from(frame.slice(0, Math.min(20, frame.length))).map(b => b.toString(16).padStart(2, '0')).join(' '));
+    console.log(
+      "Sending frame with length:",
+      data.length,
+      "Total frame size:",
+      frame.length
+    );
+    console.log(
+      "Frame bytes (first 20):",
+      Array.from(frame.slice(0, Math.min(20, frame.length)))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ")
+    );
 
     this.ws.send(frame.buffer);
   }
@@ -318,7 +357,10 @@ export class SecureTunnelTransport implements Transport {
 
     // Process complete frames
     while (this.receiveBuffer.length >= 2) {
-      const view = new DataView(this.receiveBuffer.buffer, this.receiveBuffer.byteOffset);
+      const view = new DataView(
+        this.receiveBuffer.buffer,
+        this.receiveBuffer.byteOffset
+      );
       const frameLength = view.getUint16(0, false); // big-endian
 
       if (this.receiveBuffer.length < 2 + frameLength) {
@@ -329,14 +371,19 @@ export class SecureTunnelTransport implements Transport {
       const frameData = this.receiveBuffer.slice(2, 2 + frameLength);
       this.receiveBuffer = this.receiveBuffer.slice(2 + frameLength);
 
-      console.log('Received frame bytes:', Array.from(frameData).map(b => b.toString(16).padStart(2, '0')).join(' '));
+      console.log(
+        "Received frame bytes:",
+        Array.from(frameData)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join(" ")
+      );
 
       // Decode and handle message
       try {
         const message = this.decodeMessage(frameData);
         this.handleMessage(message);
       } catch (error) {
-        console.error('Error decoding message:', error);
+        console.error("Error decoding message:", error);
         if (this.onError) {
           this.onError(error as Error);
         }
@@ -348,13 +395,13 @@ export class SecureTunnelTransport implements Transport {
    * Handle a decoded tunnel message
    */
   private handleMessage(message: any): void {
-    console.log('Received message:', {
+    console.log("Received message:", {
       type: this.getMessageTypeName(message.type),
       streamId: message.streamId,
       connectionId: message.connectionId,
       serviceId: message.serviceId,
       availableServiceIds: message.availableServiceIds,
-      payloadSize: message.payload?.length
+      payloadSize: message.payload?.length,
     });
 
     switch (message.type) {
@@ -367,11 +414,15 @@ export class SecureTunnelTransport implements Transport {
 
       case TunnelMessageType.STREAM_START:
         // Stream started acknowledgment
-        console.log('Stream started:', message.streamId);
+        console.log("Stream started:", message.streamId);
         // In destination mode, store the streamId from source
-        if (this.config.clientMode === 'destination' && message.streamId !== undefined && message.streamId !== null) {
+        if (
+          this.config.clientMode === "destination" &&
+          message.streamId !== undefined &&
+          message.streamId !== null
+        ) {
           this.streamId = message.streamId;
-          console.log('Destination mode: Updated streamId to', this.streamId);
+          console.log("Destination mode: Updated streamId to", this.streamId);
           // Tunnel is ready after receiving STREAM_START in destination mode
           this.tunnelReady = true;
           this.processQueuedMessages();
@@ -380,7 +431,7 @@ export class SecureTunnelTransport implements Transport {
 
       case TunnelMessageType.STREAM_RESET:
         // Stream reset by remote
-        console.log('Stream reset:', message.streamId);
+        console.log("Stream reset:", message.streamId);
         if (this.onClose) {
           this.onClose();
         }
@@ -388,16 +439,16 @@ export class SecureTunnelTransport implements Transport {
 
       case TunnelMessageType.SESSION_RESET:
         // Session reset - close all streams
-        console.log('Session reset');
+        console.log("Session reset");
         this.disconnect();
         break;
 
       case TunnelMessageType.SERVICE_IDS:
         // Service IDs available
-        console.log('Available service IDs:', message.availableServiceIds);
+        console.log("Available service IDs:", message.availableServiceIds);
         // In source mode, SERVICE_IDS response means tunnel is ready
-        if (this.config.clientMode === 'source') {
-          console.log('Source mode: Tunnel ready after receiving SERVICE_IDS');
+        if (this.config.clientMode === "source") {
+          console.log("Source mode: Tunnel ready after receiving SERVICE_IDS");
           this.tunnelReady = true;
           this.processQueuedMessages();
         }
@@ -405,12 +456,12 @@ export class SecureTunnelTransport implements Transport {
 
       case TunnelMessageType.CONNECTION_START:
         // V3: New connection started
-        console.log('Connection started:', message.connectionId);
+        console.log("Connection started:", message.connectionId);
         break;
 
       case TunnelMessageType.CONNECTION_RESET:
         // V3: Connection reset
-        console.log('Connection reset:', message.connectionId);
+        console.log("Connection reset:", message.connectionId);
         break;
     }
   }
@@ -421,7 +472,9 @@ export class SecureTunnelTransport implements Transport {
   private encodeMessage(message: any): Uint8Array {
     // Create and encode the message using the appropriate protocol version
     const messageInstance = this.messageClass.create(message as any);
-    const encodedMessage = this.messageClass.encode(messageInstance as any).finish();
+    const encodedMessage = this.messageClass
+      .encode(messageInstance as any)
+      .finish();
     return encodedMessage;
   }
 
@@ -439,14 +492,14 @@ export class SecureTunnelTransport implements Transport {
    */
   private getMessageTypeName(type: number): string {
     const typeNames: { [key: number]: string } = {
-      0: 'UNKNOWN',
-      1: 'DATA',
-      2: 'STREAM_START',
-      3: this.config.protocol === 'V1' ? 'STREAM_END' : 'STREAM_RESET',
-      4: 'SESSION_RESET',
-      5: 'SERVICE_IDS',
-      6: 'CONNECTION_START',
-      7: 'CONNECTION_RESET',
+      0: "UNKNOWN",
+      1: "DATA",
+      2: "STREAM_START",
+      3: this.config.protocol === "V1" ? "STREAM_END" : "STREAM_RESET",
+      4: "SESSION_RESET",
+      5: "SERVICE_IDS",
+      6: "CONNECTION_START",
+      7: "CONNECTION_RESET",
     };
     return typeNames[type] || `UNKNOWN_${type}`;
   }

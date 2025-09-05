@@ -2,164 +2,179 @@ import * as $protobuf from "protobufjs";
 import Long = require("long");
 /** Namespace tunnel. */
 export namespace tunnel {
+  /** TunnelMessageType enum. */
+  enum TunnelMessageType {
+    UNKNOWN = 0,
+    DATA = 1,
+    STREAM_START = 2,
+    STREAM_RESET = 3,
+    SESSION_RESET = 4,
+    SERVICE_IDS = 5,
+    CONNECTION_START = 6,
+    CONNECTION_RESET = 7,
+  }
 
-    /** TunnelMessageType enum. */
-    enum TunnelMessageType {
-        UNKNOWN = 0,
-        DATA = 1,
-        STREAM_START = 2,
-        STREAM_RESET = 3,
-        SESSION_RESET = 4,
-        SERVICE_IDS = 5,
-        CONNECTION_START = 6,
-        CONNECTION_RESET = 7
-    }
+  /** Properties of a TunnelMessage. */
+  interface ITunnelMessage {
+    /** TunnelMessage type */
+    type?: tunnel.TunnelMessageType | null;
 
-    /** Properties of a TunnelMessage. */
-    interface ITunnelMessage {
+    /** TunnelMessage streamId */
+    streamId?: number | null;
 
-        /** TunnelMessage type */
-        type?: (tunnel.TunnelMessageType|null);
+    /** TunnelMessage connectionId */
+    connectionId?: number | null;
 
-        /** TunnelMessage streamId */
-        streamId?: (number|null);
+    /** TunnelMessage ignorable */
+    ignorable?: boolean | null;
 
-        /** TunnelMessage connectionId */
-        connectionId?: (number|null);
+    /** TunnelMessage payload */
+    payload?: Uint8Array | null;
 
-        /** TunnelMessage ignorable */
-        ignorable?: (boolean|null);
+    /** TunnelMessage serviceId */
+    serviceId?: string | null;
 
-        /** TunnelMessage payload */
-        payload?: (Uint8Array|null);
+    /** TunnelMessage availableServiceIds */
+    availableServiceIds?: string[] | null;
+  }
 
-        /** TunnelMessage serviceId */
-        serviceId?: (string|null);
+  /** Represents a TunnelMessage. */
+  class TunnelMessage implements ITunnelMessage {
+    /**
+     * Constructs a new TunnelMessage.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: tunnel.ITunnelMessage);
 
-        /** TunnelMessage availableServiceIds */
-        availableServiceIds?: (string[]|null);
-    }
+    /** TunnelMessage type. */
+    public type: tunnel.TunnelMessageType;
 
-    /** Represents a TunnelMessage. */
-    class TunnelMessage implements ITunnelMessage {
+    /** TunnelMessage streamId. */
+    public streamId?: number | null;
 
-        /**
-         * Constructs a new TunnelMessage.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: tunnel.ITunnelMessage);
+    /** TunnelMessage connectionId. */
+    public connectionId?: number | null;
 
-        /** TunnelMessage type. */
-        public type: tunnel.TunnelMessageType;
+    /** TunnelMessage ignorable. */
+    public ignorable?: boolean | null;
 
-        /** TunnelMessage streamId. */
-        public streamId?: (number|null);
+    /** TunnelMessage payload. */
+    public payload?: Uint8Array | null;
 
-        /** TunnelMessage connectionId. */
-        public connectionId?: (number|null);
+    /** TunnelMessage serviceId. */
+    public serviceId?: string | null;
 
-        /** TunnelMessage ignorable. */
-        public ignorable?: (boolean|null);
+    /** TunnelMessage availableServiceIds. */
+    public availableServiceIds: string[];
 
-        /** TunnelMessage payload. */
-        public payload?: (Uint8Array|null);
+    /** TunnelMessage _streamId. */
+    public _streamId?: "streamId";
 
-        /** TunnelMessage serviceId. */
-        public serviceId?: (string|null);
+    /** TunnelMessage _connectionId. */
+    public _connectionId?: "connectionId";
 
-        /** TunnelMessage availableServiceIds. */
-        public availableServiceIds: string[];
+    /** TunnelMessage _ignorable. */
+    public _ignorable?: "ignorable";
 
-        /** TunnelMessage _streamId. */
-        public _streamId?: "streamId";
+    /** TunnelMessage _payload. */
+    public _payload?: "payload";
 
-        /** TunnelMessage _connectionId. */
-        public _connectionId?: "connectionId";
+    /** TunnelMessage _serviceId. */
+    public _serviceId?: "serviceId";
 
-        /** TunnelMessage _ignorable. */
-        public _ignorable?: "ignorable";
+    /**
+     * Creates a new TunnelMessage instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns TunnelMessage instance
+     */
+    public static create(
+      properties?: tunnel.ITunnelMessage
+    ): tunnel.TunnelMessage;
 
-        /** TunnelMessage _payload. */
-        public _payload?: "payload";
+    /**
+     * Encodes the specified TunnelMessage message. Does not implicitly {@link tunnel.TunnelMessage.verify|verify} messages.
+     * @param message TunnelMessage message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(
+      message: tunnel.ITunnelMessage,
+      writer?: $protobuf.Writer
+    ): $protobuf.Writer;
 
-        /** TunnelMessage _serviceId. */
-        public _serviceId?: "serviceId";
+    /**
+     * Encodes the specified TunnelMessage message, length delimited. Does not implicitly {@link tunnel.TunnelMessage.verify|verify} messages.
+     * @param message TunnelMessage message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(
+      message: tunnel.ITunnelMessage,
+      writer?: $protobuf.Writer
+    ): $protobuf.Writer;
 
-        /**
-         * Creates a new TunnelMessage instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns TunnelMessage instance
-         */
-        public static create(properties?: tunnel.ITunnelMessage): tunnel.TunnelMessage;
+    /**
+     * Decodes a TunnelMessage message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns TunnelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(
+      reader: $protobuf.Reader | Uint8Array,
+      length?: number
+    ): tunnel.TunnelMessage;
 
-        /**
-         * Encodes the specified TunnelMessage message. Does not implicitly {@link tunnel.TunnelMessage.verify|verify} messages.
-         * @param message TunnelMessage message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: tunnel.ITunnelMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    /**
+     * Decodes a TunnelMessage message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns TunnelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(
+      reader: $protobuf.Reader | Uint8Array
+    ): tunnel.TunnelMessage;
 
-        /**
-         * Encodes the specified TunnelMessage message, length delimited. Does not implicitly {@link tunnel.TunnelMessage.verify|verify} messages.
-         * @param message TunnelMessage message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: tunnel.ITunnelMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    /**
+     * Verifies a TunnelMessage message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): string | null;
 
-        /**
-         * Decodes a TunnelMessage message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns TunnelMessage
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): tunnel.TunnelMessage;
+    /**
+     * Creates a TunnelMessage message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns TunnelMessage
+     */
+    public static fromObject(object: {
+      [k: string]: any;
+    }): tunnel.TunnelMessage;
 
-        /**
-         * Decodes a TunnelMessage message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns TunnelMessage
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): tunnel.TunnelMessage;
+    /**
+     * Creates a plain object from a TunnelMessage message. Also converts values to other types if specified.
+     * @param message TunnelMessage
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(
+      message: tunnel.TunnelMessage,
+      options?: $protobuf.IConversionOptions
+    ): { [k: string]: any };
 
-        /**
-         * Verifies a TunnelMessage message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
+    /**
+     * Converts this TunnelMessage to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
 
-        /**
-         * Creates a TunnelMessage message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns TunnelMessage
-         */
-        public static fromObject(object: { [k: string]: any }): tunnel.TunnelMessage;
-
-        /**
-         * Creates a plain object from a TunnelMessage message. Also converts values to other types if specified.
-         * @param message TunnelMessage
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: tunnel.TunnelMessage, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this TunnelMessage to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for TunnelMessage
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
-    }
+    /**
+     * Gets the default type url for TunnelMessage
+     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns The default type url
+     */
+    public static getTypeUrl(typeUrlPrefix?: string): string;
+  }
 }

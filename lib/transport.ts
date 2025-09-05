@@ -22,7 +22,7 @@ export class WebSocketTransport implements Transport {
   private url: string;
   private protocols?: string | string[];
   private callbacks: TransportCallbacks = {};
-  
+
   // Callbacks for transport events
   public onData?: (data: Uint8Array) => void;
   public onError?: (error: Error) => void;
@@ -38,14 +38,14 @@ export class WebSocketTransport implements Transport {
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url, this.protocols);
-        this.ws.binaryType = 'arraybuffer';
+        this.ws.binaryType = "arraybuffer";
 
         this.ws.onopen = () => {
           resolve();
         };
 
         this.ws.onerror = (event) => {
-          const error = new Error('WebSocket error');
+          const error = new Error("WebSocket error");
           if (this.onError) {
             this.onError(error);
           }
@@ -81,7 +81,7 @@ export class WebSocketTransport implements Transport {
 
   async send(data: Uint8Array): Promise<void> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error('WebSocket is not connected');
+      throw new Error("WebSocket is not connected");
     }
     this.ws.send(data.buffer);
   }
@@ -97,12 +97,12 @@ export class WebSocketTransport implements Transport {
 export class CustomTransport implements Transport {
   public id: string;
   private isConnected = false;
-  
+
   // Callbacks for transport events
   public onData?: (data: Uint8Array) => void;
   public onError?: (error: Error) => void;
   public onClose?: () => void;
-  
+
   // Custom implementation callbacks
   private connectImpl?: () => Promise<void>;
   private disconnectImpl?: () => Promise<void>;
@@ -139,7 +139,7 @@ export class CustomTransport implements Transport {
 
   async send(data: Uint8Array): Promise<void> {
     if (!this.isConnected) {
-      throw new Error('Transport is not connected');
+      throw new Error("Transport is not connected");
     }
     if (this.sendImpl) {
       await this.sendImpl(data);
@@ -177,18 +177,21 @@ export class TransportManager {
 
   async createTransport(transport: Transport): Promise<void> {
     if (!this.wasmInstance) {
-      throw new Error('WASM instance not set');
+      throw new Error("WASM instance not set");
     }
 
-    console.log('Creating transport with ID:', transport.id);
-    console.log('WASM instance available:', !!this.wasmInstance);
-    console.log('WASM createTransport function:', typeof this.wasmInstance.createTransport);
+    console.log("Creating transport with ID:", transport.id);
+    console.log("WASM instance available:", !!this.wasmInstance);
+    console.log(
+      "WASM createTransport function:",
+      typeof this.wasmInstance.createTransport
+    );
 
     // Register the transport with WASM
     const callbacks = {
       onWrite: (data: Uint8Array) => {
         // Data from WASM to be sent over transport
-        transport.send(data).catch(error => {
+        transport.send(data).catch((error) => {
           if (transport.onError) {
             transport.onError(error);
           }
@@ -196,17 +199,17 @@ export class TransportManager {
       },
       onClose: () => {
         transport.disconnect().catch(console.error);
-      }
+      },
     };
 
     try {
       const result = this.wasmInstance.createTransport(transport.id, callbacks);
-      console.log('WASM createTransport result:', result);
+      console.log("WASM createTransport result:", result);
     } catch (error) {
-      console.error('Error calling WASM createTransport:', error);
+      console.error("Error calling WASM createTransport:", error);
       throw error;
     }
-    
+
     // Set up data reception callback
     transport.onData = (data: Uint8Array) => {
       // Data received from transport, inject into WASM
