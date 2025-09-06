@@ -5,6 +5,7 @@ before:
   hooks:
     - go mod tidy
     - go mod download
+    - pnpm install
 
 builds:
   - id: sshclient
@@ -24,6 +25,7 @@ builds:
     hooks:
       post:
         - sh -c 'cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/wasm_exec.js'
+        - pnpm build:ts
 
 archives:
   - id: wasm-archive
