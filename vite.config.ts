@@ -23,13 +23,18 @@ export default defineConfig(({ command, mode }) => {
     return {
       build: {
         lib: {
-          entry: resolve(__dirname, 'lib/index.ts'),
+          entry: {
+            index: resolve(__dirname, 'lib/index.ts'),
+            next: resolve(__dirname, 'lib/next.ts'),
+            vite: resolve(__dirname, 'lib/vite.ts'),
+            react: resolve(__dirname, 'lib/react.ts')
+          },
           name: 'SSHClient',
-          fileName: (format) => `index.${format === 'es' ? 'esm' : format}.js`,
+          fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'esm' : format}.js`,
           formats: ['es', 'cjs']
         },
         rollupOptions: {
-          external: [],
+          external: ['react', 'vue'],
           output: {
             exports: 'named'
           }

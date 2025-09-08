@@ -88,21 +88,32 @@ npm install sshclient-wasm
 # - wasm_exec.js
 ```
 
-### Simplified Initialization (Recommended)
+### Framework-Specific Imports (Recommended)
 
 ```javascript
-import {
-  SSHClient,
-  SSHClientHelpers,
-  WebSocketTransport,
-} from "sshclient-wasm";
+// Next.js optimized
+import { initializeSSHClient, SSHClient, NextJSConfig } from "sshclient-wasm/next";
 
-// Zero-config initialization with auto-detection
+// Vite optimized  
+import { initializeSSHClient, SSHClient, ViteConfig } from "sshclient-wasm/vite";
+
+// React hooks and utilities
+import { useSSHClient, SSHClient } from "sshclient-wasm/react";
+
+// Generic/universal import
+import { SSHClient } from "sshclient-wasm";
+```
+
+### Quick Initialization
+
+```javascript
+// Framework-specific (auto-optimized)
+import { initializeSSHClient } from "sshclient-wasm/next";
+await initializeSSHClient();
+
+// Or generic with auto-detection
+import { SSHClient } from "sshclient-wasm";
 await SSHClient.initialize();
-
-// Or use framework-specific helpers
-await SSHClientHelpers.initializeForNextJS();
-// await SSHClientHelpers.initializeForVite();
 ```
 
 ## Usage Examples
@@ -143,15 +154,15 @@ await session.disconnect();
 ### Next.js Example
 
 ```javascript
-import { SSHClientHelpers, WebSocketTransport } from "sshclient-wasm";
+import { initializeSSHClient, NextJSConfig } from "sshclient-wasm/next";
 import { useEffect, useState } from "react";
 
 function SSHComponent() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Initialize for Next.js
-    SSHClientHelpers.initializeForNextJS()
+    // Initialize with Next.js optimizations
+    initializeSSHClient()
       .then(() => setIsReady(true))
       .catch((error) => {
         console.error("Failed to initialize SSH client:", error);
@@ -163,6 +174,52 @@ function SSHComponent() {
 
   // Your SSH logic here
   return <div>SSH client ready!</div>;
+}
+
+// Alternative: Use the React hook
+import { useSSHClient } from "sshclient-wasm/react";
+
+function SSHComponentWithHook() {
+  const { isInitialized, initError, isLoading } = useSSHClient();
+
+  if (isLoading) return <div>Loading SSH client...</div>;
+  if (initError) return <div>Error: {initError.message}</div>;
+  if (!isInitialized) return <div>SSH client not ready</div>;
+
+  return <div>SSH client ready!</div>;
+}
+```
+
+### Vite/React Example
+
+```javascript
+import { initializeSSHClient, ViteConfig } from "sshclient-wasm/vite";
+import { useSSHConnection } from "sshclient-wasm/react";
+
+function ViteSSHComponent() {
+  const { connect, disconnect, session, connectionState } = useSSHConnection();
+
+  useEffect(() => {
+    initializeSSHClient();
+  }, []);
+
+  const handleConnect = async () => {
+    const transport = new WebSocketTransport("transport-1", "wss://example.com");
+    await connect({
+      host: "example.com",
+      port: 22,
+      user: "username",
+      password: "password"
+    }, transport);
+  };
+
+  return (
+    <div>
+      <p>Status: {connectionState}</p>
+      <button onClick={handleConnect}>Connect SSH</button>
+      <button onClick={disconnect}>Disconnect</button>
+    </div>
+  );
 }
 ```
 
@@ -252,7 +309,21 @@ cp node_modules/sshclient-wasm/dist/sshclient.wasm public/
 cp node_modules/sshclient-wasm/dist/wasm_exec.js public/
 ```
 
-**2. Configure `next.config.js`:**
+**2. Use the Next.js configuration helper:**
+
+```javascript
+// next.config.js
+import { NextJSConfig } from "sshclient-wasm/next";
+
+/** @type {import('next').NextConfig} */
+const nextConfig = NextJSConfig.getNextConfig({
+  // Your custom Next.js config here
+});
+
+module.exports = nextConfig;
+```
+
+**Or configure manually:**
 
 ```javascript
 /** @type {import('next').NextConfig} */
@@ -280,14 +351,17 @@ module.exports = nextConfig;
 **3. Use in your components:**
 
 ```javascript
-import { SSHClientHelpers } from "sshclient-wasm";
+import { initializeSSHClient, useSSHClient } from "sshclient-wasm/next";
 
-// In your component
+// Method 1: Direct initialization
 useEffect(() => {
-  SSHClientHelpers.initializeForNextJS()
+  initializeSSHClient()
     .then(() => console.log("SSH client ready"))
     .catch(console.error);
 }, []);
+
+// Method 2: Using the hook (if using sshclient-wasm/react)
+const { isInitialized, initError, isLoading } = useSSHClient();
 ```
 
 ### Vite/React
@@ -299,7 +373,21 @@ cp node_modules/sshclient-wasm/dist/sshclient.wasm public/
 cp node_modules/sshclient-wasm/dist/wasm_exec.js public/
 ```
 
-**2. Configure `vite.config.ts`:**
+**2. Use the Vite configuration helper:**
+
+```typescript
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { ViteConfig } from "sshclient-wasm/vite";
+
+export default defineConfig(ViteConfig.getViteConfig({
+  plugins: [react()],
+  // Your custom Vite config here
+}));
+```
+
+**Or configure manually:**
 
 ```typescript
 import { defineConfig } from "vite";
@@ -319,13 +407,45 @@ export default defineConfig({
 **3. Use in your components:**
 
 ```javascript
-import { SSHClientHelpers } from "sshclient-wasm";
+import { initializeSSHClient } from "sshclient-wasm/vite";
+import { useSSHClient } from "sshclient-wasm/react";
 
+// Method 1: Direct initialization  
 useEffect(() => {
-  SSHClientHelpers.initializeForVite()
+  initializeSSHClient()
     .then(() => console.log("SSH client ready"))
     .catch(console.error);
 }, []);
+
+// Method 2: Using React hooks
+const { isInitialized, initError, isLoading } = useSSHClient();
+```
+
+### React Hooks & Utilities
+
+The `sshclient-wasm/react` module provides React-specific hooks and utilities:
+
+```javascript
+import { 
+  useSSHClient, 
+  useSSHConnection,
+  SSHClientProvider,
+  withSSHClient 
+} from "sshclient-wasm/react";
+
+// Hook for initialization
+const { isInitialized, initError, isLoading } = useSSHClient();
+
+// Hook for connection management
+const { connect, disconnect, send, session, connectionState } = useSSHConnection();
+
+// Provider for context
+<SSHClientProvider options={{ cacheBusting: false }}>
+  <YourApp />
+</SSHClientProvider>
+
+// HOC wrapper
+const WrappedComponent = withSSHClient(YourComponent);
 ```
 
 ### Webpack/Generic

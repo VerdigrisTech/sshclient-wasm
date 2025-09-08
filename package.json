@@ -2,21 +2,44 @@
   "name": "sshclient-wasm",
   "version": "1.0.0",
   "description": "WebAssembly-based SSH client for the browser with packet interception hooks",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./next": {
+      "import": "./dist/next.esm.js",
+      "require": "./dist/next.cjs.js",
+      "types": "./dist/next.d.ts"
+    },
+    "./vite": {
+      "import": "./dist/vite.esm.js",
+      "require": "./dist/vite.cjs.js",
+      "types": "./dist/vite.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react.esm.js",
+      "require": "./dist/react.cjs.js",
+      "types": "./dist/react.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist/"
   ],
   "scripts": {
-    "build:wasm": "make build",
+    "build:wasm": "goreleaser build",
     "build:ts": "vite build",
     "build": "npm run build:wasm && npm run build:ts",
     "clean": "rm -rf dist/",
     "prepublishOnly": "npm run build",
     "test": "vitest",
     "test:run": "vitest run",
-    "dev": "npm run build:wasm && vite",
+    "dev": "pnpm run build:wasm --snapshot --clean && vite",
     "dev:vite": "vite"
   },
   "keywords": [

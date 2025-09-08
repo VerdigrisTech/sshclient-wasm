@@ -5,7 +5,6 @@ before:
   hooks:
     - go mod tidy
     - go mod download
-    - pnpm install
 
 builds:
   - id: sshclient
