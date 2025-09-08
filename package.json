@@ -55,7 +55,7 @@
     "websocket",
     "packet"
   ],
-  "author": "Andrew",
+  "author": "Verdigris Technologies, Inc. <engineering@verdigris.co>",
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
