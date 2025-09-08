@@ -6,8 +6,7 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist/",
-    "wasm_exec.js"
+    "dist/"
   ],
   "scripts": {
     "build:wasm": "make build",
