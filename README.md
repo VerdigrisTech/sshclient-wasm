@@ -94,7 +94,7 @@ npm install sshclient-wasm
 // Next.js optimized
 import { initializeSSHClient, SSHClient, NextJSConfig } from "sshclient-wasm/next";
 
-// Vite optimized  
+// Vite optimized
 import { initializeSSHClient, SSHClient, ViteConfig } from "sshclient-wasm/vite";
 
 // React hooks and utilities
@@ -410,7 +410,7 @@ export default defineConfig({
 import { initializeSSHClient } from "sshclient-wasm/vite";
 import { useSSHClient } from "sshclient-wasm/react";
 
-// Method 1: Direct initialization  
+// Method 1: Direct initialization
 useEffect(() => {
   initializeSSHClient()
     .then(() => console.log("SSH client ready"))
@@ -426,11 +426,11 @@ const { isInitialized, initError, isLoading } = useSSHClient();
 The `sshclient-wasm/react` module provides React-specific hooks and utilities:
 
 ```javascript
-import { 
-  useSSHClient, 
+import {
+  useSSHClient,
   useSSHConnection,
   SSHClientProvider,
-  withSSHClient 
+  withSSHClient
 } from "sshclient-wasm/react";
 
 // Hook for initialization
@@ -1136,4 +1136,4 @@ class MyCustomTransport extends CustomTransport {
 
 ## License
 
-MIT
+BSD-3-Clause
