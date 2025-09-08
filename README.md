@@ -21,39 +21,39 @@ graph TB
         A["ES Module<br/>(TypeScript)"]
         B["Transport Translation Layer"]
         C["WASM Layer<br/>(Go SSH Client)"]
-        
+
         A --> B
         B <--> C
     end
-    
+
     subgraph "Transport Implementations"
         D["WebSocket Transport"]
         E["AWS IoT Secure Tunnel<br/>Transport"]
         F["Custom Transport<br/>(User-defined)"]
-        
+
         B --> D
         B --> E
         B --> F
     end
-    
+
     subgraph "Network Layer"
         G["Direct WebSocket<br/>Connection"]
         H["AWS IoT<br/>Secure Tunneling"]
         I["Custom Protocol<br/>Endpoint"]
-        
+
         D <--> G
         E <--> H
         F <--> I
     end
-    
+
     subgraph "Destination"
         J["SSH Server"]
-        
+
         G --> J
         H --> J
         I --> J
     end
-    
+
     style A fill:#0277bd,color:#fff
     style B fill:#7b1fa2,color:#fff
     style C fill:#ef6c00,color:#fff
@@ -72,30 +72,63 @@ graph TB
 npm install sshclient-wasm
 ```
 
-## Usage
+## Quick Start
+
+### Installation & Setup
+
+```bash
+npm install sshclient-wasm
+```
+
+**Copy WASM files to your public directory:**
+
+```bash
+# Copy these files to your public/ directory:
+# - sshclient.wasm
+# - wasm_exec.js
+```
+
+### Simplified Initialization (Recommended)
+
+```javascript
+import {
+  SSHClient,
+  SSHClientHelpers,
+  WebSocketTransport,
+} from "sshclient-wasm";
+
+// Zero-config initialization with auto-detection
+await SSHClient.initialize();
+
+// Or use framework-specific helpers
+await SSHClientHelpers.initializeForNextJS();
+// await SSHClientHelpers.initializeForVite();
+```
+
+## Usage Examples
 
 ### Basic WebSocket Connection
 
 ```javascript
-import { SSHClient, WebSocketTransport } from 'sshclient-wasm';
+import { SSHClient, WebSocketTransport } from "sshclient-wasm";
 
-// Initialize the WASM module
-await SSHClient.initialize('/path/to/sshclient.wasm');
+// Simple initialization - auto-detects assets in public directory
+await SSHClient.initialize();
 
 // Create a WebSocket transport
 const transport = new WebSocketTransport(
-  'transport-1',
-  'wss://ssh-gateway.example.com',
-  ['ssh']
+  "transport-1",
+  "wss://ssh-gateway.example.com",
+  ["ssh"]
 );
 
 // Connect to SSH server
 const session = await SSHClient.connect(
   {
-    host: 'example.com',
+    host: "example.com",
     port: 22,
-    user: 'username',
-    password: 'password'
+    user: "username",
+    password: "password",
   },
   transport
 );
@@ -107,36 +140,62 @@ await session.send(new Uint8Array([0x01, 0x02, 0x03]));
 await session.disconnect();
 ```
 
+### Next.js Example
+
+```javascript
+import { SSHClientHelpers, WebSocketTransport } from "sshclient-wasm";
+import { useEffect, useState } from "react";
+
+function SSHComponent() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Initialize for Next.js
+    SSHClientHelpers.initializeForNextJS()
+      .then(() => setIsReady(true))
+      .catch((error) => {
+        console.error("Failed to initialize SSH client:", error);
+        // Error messages will guide you to fix asset placement
+      });
+  }, []);
+
+  if (!isReady) return <div>Loading SSH client...</div>;
+
+  // Your SSH logic here
+  return <div>SSH client ready!</div>;
+}
+```
+
 ### AWS IoT Secure Tunnel Connection
 
 ```javascript
-import { SSHClient, SecureTunnelTransport } from 'sshclient-wasm';
+import { SSHClient, SecureTunnelTransport } from "sshclient-wasm";
 
-// Initialize the WASM module
-await SSHClient.initialize('/path/to/sshclient.wasm');
+// Auto-initialize
+await SSHClient.initialize();
 
 // Create AWS IoT Secure Tunnel transport
-const transport = new SecureTunnelTransport('tunnel-1', {
-  region: 'us-east-1',
-  accessToken: 'your-tunnel-access-token',
-  clientMode: 'source',
-  serviceId: 'SSH',
-  protocol: 'V3'
+const transport = new SecureTunnelTransport("tunnel-1", {
+  region: "us-east-1",
+  accessToken: "your-tunnel-access-token",
+  clientMode: "source",
+  serviceId: "SSH",
+  protocol: "V3",
 });
 
 // Connect through the secure tunnel
 const session = await SSHClient.connect(
   {
-    host: 'internal-server',
+    host: "internal-server",
     port: 22,
-    user: 'username',
-    privateKey: 'ssh-private-key'
+    user: "username",
+    privateKey: "ssh-private-key",
   },
   transport
 );
 
 // Use the SSH session
-await session.send(encoder.encode('ls -la\n'));
+await session.send(encoder.encode("ls -la\n"));
 
 // Disconnect
 await session.disconnect();
@@ -145,26 +204,26 @@ await session.disconnect();
 ### With Packet Hooks
 
 ```javascript
-const transport = new WebSocketTransport('transport-1', 'wss://example.com');
+const transport = new WebSocketTransport("transport-1", "wss://example.com");
 
 const session = await SSHClient.connect(
   {
-    host: 'example.com',
+    host: "example.com",
     port: 22,
-    user: 'username',
-    password: 'password'
+    user: "username",
+    password: "password",
   },
   transport,
   {
     onPacketSend: (data, metadata) => {
-      console.log('Sending packet:', data, metadata);
+      console.log("Sending packet:", data, metadata);
     },
     onPacketReceive: (data, metadata) => {
-      console.log('Received packet:', data, metadata);
+      console.log("Received packet:", data, metadata);
     },
     onStateChange: (state) => {
-      console.log('Connection state:', state);
-    }
+      console.log("Connection state:", state);
+    },
   }
 );
 ```
@@ -172,7 +231,7 @@ const session = await SSHClient.connect(
 ### Packet Transformation
 
 ```javascript
-import { PacketTransformer } from 'sshclient-wasm';
+import { PacketTransformer } from "sshclient-wasm";
 
 // Transform to/from Base64
 const base64 = PacketTransformer.toBase64(data);
@@ -180,6 +239,164 @@ const binary = PacketTransformer.fromBase64(base64);
 
 // Custom Protobuf transformation (implement your own logic)
 const protobuf = PacketTransformer.toProtobuf(data, schema);
+```
+
+## Framework-Specific Setup
+
+### Next.js
+
+**1. Copy WASM files to `public/`:**
+
+```bash
+cp node_modules/sshclient-wasm/dist/sshclient.wasm public/
+cp node_modules/sshclient-wasm/dist/wasm_exec.js public/
+```
+
+**2. Configure `next.config.js`:**
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  webpack: (config) => {
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
+    return config;
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+**3. Use in your components:**
+
+```javascript
+import { SSHClientHelpers } from "sshclient-wasm";
+
+// In your component
+useEffect(() => {
+  SSHClientHelpers.initializeForNextJS()
+    .then(() => console.log("SSH client ready"))
+    .catch(console.error);
+}, []);
+```
+
+### Vite/React
+
+**1. Copy WASM files to `public/`:**
+
+```bash
+cp node_modules/sshclient-wasm/dist/sshclient.wasm public/
+cp node_modules/sshclient-wasm/dist/wasm_exec.js public/
+```
+
+**2. Configure `vite.config.ts`:**
+
+```typescript
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    headers: {
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
+    },
+  },
+});
+```
+
+**3. Use in your components:**
+
+```javascript
+import { SSHClientHelpers } from "sshclient-wasm";
+
+useEffect(() => {
+  SSHClientHelpers.initializeForVite()
+    .then(() => console.log("SSH client ready"))
+    .catch(console.error);
+}, []);
+```
+
+### Webpack/Generic
+
+**1. Copy WASM files to your public directory**
+
+**2. Initialize with custom options:**
+
+```javascript
+import { SSHClient } from "sshclient-wasm";
+
+await SSHClient.initialize({
+  publicDir: "/assets/", // Your public directory path
+  autoDetect: true,
+  cacheBusting: process.env.NODE_ENV === "development",
+});
+```
+
+## Advanced Initialization Options
+
+### Custom Paths
+
+```javascript
+import { SSHClient } from "sshclient-wasm";
+
+await SSHClient.initialize({
+  wasmPath: "/custom/path/sshclient.wasm",
+  wasmExecPath: "/custom/path/wasm_exec.js",
+  autoDetect: false,
+  cacheBusting: false,
+  timeout: 15000,
+});
+```
+
+### Asset Availability Testing
+
+```javascript
+import { SSHClientHelpers } from "sshclient-wasm";
+
+// Test if assets are properly placed
+const { wasmAvailable, wasmExecAvailable } =
+  await SSHClientHelpers.testAssetAvailability(
+    "/sshclient.wasm",
+    "/wasm_exec.js"
+  );
+
+if (!wasmAvailable) {
+  console.error("❌ Please copy sshclient.wasm to your public directory");
+}
+
+if (!wasmExecAvailable) {
+  console.error("❌ Please copy wasm_exec.js to your public directory");
+}
+```
+
+### Error Handling & Troubleshooting
+
+```javascript
+try {
+  await SSHClient.initialize();
+} catch (error) {
+  if (error.message.includes("WASM file not found")) {
+    console.error("Copy sshclient.wasm to public/ directory");
+  } else if (error.message.includes("wasm_exec.js not found")) {
+    console.error("Copy wasm_exec.js to public/ directory");
+  } else if (error.message.includes("Failed to fetch WASM")) {
+    console.error("Check network connection and CORS headers");
+  } else {
+    console.error("Initialization failed:", error.message);
+  }
+}
 ```
 
 ## Development
@@ -234,9 +451,11 @@ The main entry point for establishing SSH connections through WebAssembly.
 class SSHClient {
   /**
    * Initialize the WASM module. Must be called before any other methods.
-   * @param wasmPath - Path to the sshclient.wasm file
+   * @param options - Initialization options or legacy string path
    */
-  static async initialize(wasmPath?: string): Promise<void>
+  static async initialize(
+    options?: InitializationOptions | string
+  ): Promise<void>;
 
   /**
    * Connect to an SSH server through a transport
@@ -249,19 +468,19 @@ class SSHClient {
     options: ConnectionOptions,
     transport: Transport,
     callbacks?: SSHClientCallbacks
-  ): Promise<SSHSession>
+  ): Promise<SSHSession>;
 
   /**
    * Disconnect a specific SSH session
    * @param sessionId - The ID of the session to disconnect
    */
-  static async disconnect(sessionId: string): Promise<void>
+  static async disconnect(sessionId: string): Promise<void>;
 
   /**
    * Get the library version
    * @returns Version string
    */
-  static getVersion(): string
+  static getVersion(): string;
 }
 ```
 
@@ -276,14 +495,14 @@ class PacketTransformer {
    * @param data - Binary data to encode
    * @returns Base64 encoded string
    */
-  static toBase64(data: Uint8Array): string
+  static toBase64(data: Uint8Array): string;
 
   /**
    * Convert Base64 string to binary data
    * @param base64 - Base64 encoded string
    * @returns Decoded binary data
    */
-  static fromBase64(base64: string): Uint8Array
+  static fromBase64(base64: string): Uint8Array;
 
   /**
    * Transform binary data to Protobuf format (user-implemented)
@@ -291,7 +510,7 @@ class PacketTransformer {
    * @param schema - Protobuf schema definition
    * @returns Protobuf encoded data
    */
-  static toProtobuf(data: Uint8Array, schema?: any): Uint8Array
+  static toProtobuf(data: Uint8Array, schema?: any): Uint8Array;
 
   /**
    * Transform Protobuf data to binary format (user-implemented)
@@ -299,7 +518,7 @@ class PacketTransformer {
    * @param schema - Protobuf schema definition
    * @returns Decoded binary data
    */
-  static fromProtobuf(data: Uint8Array, schema?: any): Uint8Array
+  static fromProtobuf(data: Uint8Array, schema?: any): Uint8Array;
 }
 ```
 
@@ -317,11 +536,11 @@ class WebSocketTransport implements Transport {
    * @param url - WebSocket URL (e.g., 'wss://ssh-gateway.example.com')
    * @param protocols - Optional WebSocket subprotocols
    */
-  constructor(id: string, url: string, protocols?: string[])
+  constructor(id: string, url: string, protocols?: string[]);
 
-  async connect(): Promise<void>
-  async disconnect(): Promise<void>
-  async send(data: Uint8Array): Promise<void>
+  async connect(): Promise<void>;
+  async disconnect(): Promise<void>;
+  async send(data: Uint8Array): Promise<void>;
 }
 ```
 
@@ -336,11 +555,11 @@ class SecureTunnelTransport implements Transport {
    * @param id - Unique identifier for this transport
    * @param config - Tunnel configuration
    */
-  constructor(id: string, config: SecureTunnelConfig)
+  constructor(id: string, config: SecureTunnelConfig);
 
-  async connect(): Promise<void>
-  async disconnect(): Promise<void>
-  async send(data: Uint8Array): Promise<void>
+  async connect(): Promise<void>;
+  async disconnect(): Promise<void>;
+  async send(data: Uint8Array): Promise<void>;
 }
 ```
 
@@ -362,17 +581,96 @@ class CustomTransport implements Transport {
     connectImpl?: () => Promise<void>,
     disconnectImpl?: () => Promise<void>,
     sendImpl?: (data: Uint8Array) => Promise<void>
-  )
+  );
 
   /**
    * Inject received data into the transport
    * @param data - Data received from the custom protocol
    */
-  injectData(data: Uint8Array): void
+  injectData(data: Uint8Array): void;
+}
+```
+
+#### SSHClientHelpers
+
+Framework-specific helpers and utilities.
+
+```typescript
+class SSHClientHelpers {
+  /**
+   * Get recommended asset paths for the detected framework
+   */
+  static getAssetPaths: (publicDir?: string) => {
+    wasmPath: string;
+    wasmExecPath: string;
+  };
+
+  /**
+   * Detect the current framework
+   */
+  static detectFramework: () => "nextjs" | "vite" | "webpack" | "generic";
+
+  /**
+   * Test if WASM assets are available at the given paths
+   */
+  static testAssetAvailability: (
+    wasmPath: string,
+    wasmExecPath: string
+  ) => Promise<{
+    wasmAvailable: boolean;
+    wasmExecAvailable: boolean;
+  }>;
+
+  /**
+   * Next.js specific initialization helper
+   */
+  static initializeForNextJS: (
+    options?: Partial<InitializationOptions>
+  ) => Promise<void>;
+
+  /**
+   * Vite specific initialization helper
+   */
+  static initializeForVite: (
+    options?: Partial<InitializationOptions>
+  ) => Promise<void>;
+
+  /**
+   * Generic initialization with sensible defaults
+   */
+  static initializeWithDefaults: (
+    customOptions?: Partial<InitializationOptions>
+  ) => Promise<void>;
 }
 ```
 
 ### Interfaces
+
+#### InitializationOptions
+
+Configuration options for initializing the SSH client.
+
+```typescript
+interface InitializationOptions {
+  /** Path to the WASM file (default: auto-detected) */
+  wasmPath?: string;
+
+  /** Path to the wasm_exec.js file (default: auto-detected) */
+  wasmExecPath?: string;
+
+  /** Enable automatic path detection (default: true) */
+  autoDetect?: boolean;
+
+  /** Public directory path for auto-detection (default: '/') */
+  publicDir?: string;
+
+  /** Enable cache busting for development (default: true) */
+  cacheBusting?: boolean;
+
+  /** Timeout for loading assets in milliseconds (default: 10000) */
+  timeout?: number;
+}
+```
 
 #### Transport
 
@@ -380,15 +678,15 @@ Base interface for all transport implementations.
 
 ```typescript
 interface Transport {
-  id: string
-  connect(): Promise<void>
-  disconnect(): Promise<void>
-  send(data: Uint8Array): Promise<void>
-  
+  id: string;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  send(data: Uint8Array): Promise<void>;
+
   // Event handlers (set by the library)
-  onData?: (data: Uint8Array) => void
-  onError?: (error: Error) => void
-  onClose?: () => void
+  onData?: (data: Uint8Array) => void;
+  onError?: (error: Error) => void;
+  onClose?: () => void;
 }
 ```
 
@@ -399,22 +697,22 @@ SSH connection configuration.
 ```typescript
 interface ConnectionOptions {
   /** Target SSH server hostname */
-  host: string
-  
+  host: string;
+
   /** SSH server port (default: 22) */
-  port: number
-  
+  port: number;
+
   /** SSH username */
-  user: string
-  
+  user: string;
+
   /** Password for authentication (optional) */
-  password?: string
-  
+  password?: string;
+
   /** Private key for authentication (optional) */
-  privateKey?: string
-  
+  privateKey?: string;
+
   /** Connection timeout in milliseconds (optional) */
-  timeout?: number
+  timeout?: number;
 }
 ```
 
@@ -425,19 +723,19 @@ AWS IoT Secure Tunnel configuration.
 ```typescript
 interface SecureTunnelConfig {
   /** AWS region where the tunnel is created */
-  region: string
-  
+  region: string;
+
   /** Tunnel access token */
-  accessToken: string
-  
+  accessToken: string;
+
   /** Client mode: 'source' or 'destination' */
-  clientMode: 'source' | 'destination'
-  
+  clientMode: "source" | "destination";
+
   /** Service identifier for multiplexed tunnels (optional) */
-  serviceId?: string
-  
+  serviceId?: string;
+
   /** Protocol version: 'V2' or 'V3' (default: 'V2') */
-  protocol?: 'V2' | 'V3'
+  protocol?: "V2" | "V3";
 }
 ```
 
@@ -448,18 +746,18 @@ SSH session handle returned from connect().
 ```typescript
 interface SSHSession {
   /** Unique session identifier */
-  sessionId: string
-  
+  sessionId: string;
+
   /**
    * Send data through the SSH connection
    * @param data - Binary data to send
    */
-  send(data: Uint8Array): Promise<void>
-  
+  send(data: Uint8Array): Promise<void>;
+
   /**
    * Close the SSH connection
    */
-  disconnect(): Promise<void>
+  disconnect(): Promise<void>;
 }
 ```
 
@@ -474,20 +772,20 @@ interface SSHClientCallbacks {
    * @param data - Raw packet data being sent
    * @param metadata - Packet metadata (type, size, etc.)
    */
-  onPacketSend?: (data: Uint8Array, metadata: PacketMetadata) => void
-  
+  onPacketSend?: (data: Uint8Array, metadata: PacketMetadata) => void;
+
   /**
    * Called when receiving an SSH packet
    * @param data - Raw packet data received
    * @param metadata - Packet metadata (type, size, etc.)
    */
-  onPacketReceive?: (data: Uint8Array, metadata: PacketMetadata) => void
-  
+  onPacketReceive?: (data: Uint8Array, metadata: PacketMetadata) => void;
+
   /**
    * Called when SSH connection state changes
    * @param state - New connection state
    */
-  onStateChange?: (state: SSHConnectionState) => void
+  onStateChange?: (state: SSHConnectionState) => void;
 }
 ```
 
@@ -498,16 +796,16 @@ Metadata about SSH packets.
 ```typescript
 interface PacketMetadata {
   /** Packet type identifier */
-  packetType: string
-  
+  packetType: string;
+
   /** Packet type code */
-  packetTypeCode: number
-  
+  packetTypeCode: number;
+
   /** Packet size in bytes */
-  size: number
-  
+  size: number;
+
   /** Timestamp of packet */
-  timestamp?: number
+  timestamp?: number;
 }
 ```
 
@@ -516,15 +814,15 @@ interface PacketMetadata {
 SSH connection states.
 
 ```typescript
-type SSHConnectionState = 
-  | 'connecting'
-  | 'connected'
-  | 'authenticating'
-  | 'authenticated'
-  | 'ready'
-  | 'disconnecting'
-  | 'disconnected'
-  | 'error'
+type SSHConnectionState =
+  | "connecting"
+  | "connected"
+  | "authenticating"
+  | "authenticated"
+  | "ready"
+  | "disconnecting"
+  | "disconnected"
+  | "error";
 ```
 
 ### Enums
@@ -542,8 +840,90 @@ enum TunnelMessageType {
   SESSION_RESET = 4,
   SERVICE_IDS = 5,
   CONNECTION_START = 6,
-  CONNECTION_RESET = 7
+  CONNECTION_RESET = 7,
 }
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### ❌ "WASM file not found"
+
+```bash
+# Solution: Copy WASM files to public directory
+cp node_modules/sshclient-wasm/dist/sshclient.wasm public/
+cp node_modules/sshclient-wasm/dist/wasm_exec.js public/
+```
+
+#### ❌ "Failed to fetch WASM file: 404"
+
+- Verify files are in your public directory
+- Check that your web server serves static files from public/
+- Ensure file paths are correct (case-sensitive on some servers)
+
+#### ❌ "Go runtime not loaded"
+
+- Ensure `wasm_exec.js` is accessible and loads successfully
+- Check browser console for script loading errors
+- Verify CORS headers allow script loading
+
+#### ❌ "Cross-origin requests blocked"
+
+**Next.js users:** Add CORS headers to `next.config.js`:
+
+```javascript
+async headers() {
+  return [{
+    source: '/(.*)',
+    headers: [
+      { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+      { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+    ],
+  }];
+}
+```
+
+**Vite users:** Add to `vite.config.ts`:
+
+```typescript
+server: {
+  headers: {
+    'Cross-Origin-Embedder-Policy': 'require-corp',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+  },
+}
+```
+
+#### ❌ "WebAssembly.instantiate failed"
+
+- Your browser may not support WebAssembly
+- WASM file may be corrupted or incompatible
+- Try clearing browser cache
+
+### Debug Helpers
+
+#### Test Asset Availability
+
+```typescript
+import { SSHClientHelpers } from "sshclient-wasm";
+
+const result = await SSHClientHelpers.testAssetAvailability(
+  "/sshclient.wasm",
+  "/wasm_exec.js"
+);
+
+console.log("WASM available:", result.wasmAvailable);
+console.log("Exec available:", result.wasmExecAvailable);
+```
+
+#### Check Framework Detection
+
+```typescript
+import { SSHClientHelpers } from "sshclient-wasm";
+
+console.log("Detected framework:", SSHClientHelpers.detectFramework());
+console.log("Recommended paths:", SSHClientHelpers.getAssetPaths());
 ```
 
 ### Error Handling
@@ -552,41 +932,53 @@ All async methods throw errors that can be caught:
 
 ```typescript
 try {
-  await SSHClient.connect(options, transport)
+  await SSHClient.initialize();
+  await SSHClient.connect(options, transport);
 } catch (error) {
-  if (error.message.includes('authentication')) {
-    // Handle authentication error
-  } else if (error.message.includes('timeout')) {
-    // Handle timeout error
+  if (error.message.includes("WASM file not found")) {
+    console.error("📁 Copy sshclient.wasm to public/ directory");
+  } else if (error.message.includes("wasm_exec.js not found")) {
+    console.error("📁 Copy wasm_exec.js to public/ directory");
+  } else if (error.message.includes("Failed to fetch WASM")) {
+    console.error("🌐 Check network connection and CORS headers");
+  } else if (error.message.includes("authentication")) {
+    console.error("🔐 Check SSH credentials");
+  } else if (error.message.includes("timeout")) {
+    console.error("⏰ Connection or initialization timeout");
   } else {
-    // Handle general error
+    console.error("❌ Unknown error:", error.message);
   }
 }
 ```
+
+### Performance Tips
+
+- **Cache Busting**: Disable in production for better performance
+- **Asset Preloading**: Consider preloading WASM files for faster initialization
+- **Memory Usage**: Monitor memory usage for long-running sessions
+- **Connection Pooling**: Reuse transports when possible
 
 ### Examples
 
 #### Custom Packet Transformation
 
 ```typescript
-const session = await SSHClient.connect(
-  connectionOptions,
-  transport,
-  {
-    onPacketSend: (data, metadata) => {
-      // Transform outgoing packets
-      const transformed = PacketTransformer.toProtobuf(data, mySchema)
-      console.log(`Sending ${metadata.packetType} packet (${metadata.size} bytes)`)
-      return transformed
-    },
-    onPacketReceive: (data, metadata) => {
-      // Process incoming packets
-      const decoded = PacketTransformer.fromProtobuf(data, mySchema)
-      console.log(`Received ${metadata.packetType} packet`)
-      return decoded
-    }
-  }
-)
+const session = await SSHClient.connect(connectionOptions, transport, {
+  onPacketSend: (data, metadata) => {
+    // Transform outgoing packets
+    const transformed = PacketTransformer.toProtobuf(data, mySchema);
+    console.log(
+      `Sending ${metadata.packetType} packet (${metadata.size} bytes)`
+    );
+    return transformed;
+  },
+  onPacketReceive: (data, metadata) => {
+    // Process incoming packets
+    const decoded = PacketTransformer.fromProtobuf(data, mySchema);
+    console.log(`Received ${metadata.packetType} packet`);
+    return decoded;
+  },
+});
 ```
 
 #### Custom Transport Implementation
@@ -598,26 +990,26 @@ class MyCustomTransport extends CustomTransport {
       id,
       async () => {
         // Custom connection logic
-        await this.establishConnection(config)
+        await this.establishConnection(config);
       },
       async () => {
         // Custom disconnection logic
-        await this.closeConnection()
+        await this.closeConnection();
       },
       async (data: Uint8Array) => {
         // Custom send logic
-        await this.sendData(data)
+        await this.sendData(data);
       }
-    )
+    );
   }
-  
+
   private async establishConnection(config: MyConfig) {
     // Implementation specific to your protocol
   }
-  
+
   // Call this.injectData() when receiving data from your protocol
   handleIncomingData(data: Uint8Array) {
-    this.injectData(data)
+    this.injectData(data);
   }
 }
 ```
