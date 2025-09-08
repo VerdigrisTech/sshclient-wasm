@@ -33,13 +33,17 @@
   ],
   "scripts": {
     "build:wasm": "goreleaser build",
+    "build:wasm:dev": "goreleaser build --snapshot --clean",
+    "build:wasm:release": "goreleaser build --clean",
     "build:ts": "vite build",
     "build": "npm run build:wasm && npm run build:ts",
+    "build:dev": "npm run build:wasm:dev && npm run build:ts",
+    "build:release": "npm run build:wasm:release && npm run build:ts",
     "clean": "rm -rf dist/",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build:release",
     "test": "vitest",
     "test:run": "vitest run",
-    "dev": "pnpm run build:wasm --snapshot --clean && vite",
+    "dev": "pnpm build:dev && vite",
     "dev:vite": "vite"
   },
   "keywords": [
