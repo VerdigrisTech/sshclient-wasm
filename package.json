@@ -34,7 +34,7 @@
   "scripts": {
     "build:wasm": "goreleaser build",
     "build:wasm:dev": "goreleaser build --snapshot --clean",
-    "build:wasm:release": "goreleaser build --clean",
+    "build:wasm:release": "goreleaser build --clean --skip=validate",
     "build:ts": "vite build",
     "build": "pnpm run build:wasm",
     "build:dev": "pnpm run build:wasm:dev",
