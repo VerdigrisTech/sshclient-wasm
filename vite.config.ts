@@ -22,6 +22,9 @@ export default defineConfig(({ command, mode }) => {
     // Build configuration
     return {
       build: {
+        // We don't want to empty the dist directory because we want to keep the
+        // built WASM files.
+        emptyOutDir: false,
         lib: {
           entry: {
             index: resolve(__dirname, 'lib/index.ts'),
