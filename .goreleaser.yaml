@@ -31,8 +31,8 @@ archives:
     formats:
       - tar.gz
     files:
-      - sshclient.wasm
-      - wasm_exec.js
+      - dist/sshclient.wasm
+      - dist/wasm_exec.js
       - lib/**/*
       - package.json
       - README.md
