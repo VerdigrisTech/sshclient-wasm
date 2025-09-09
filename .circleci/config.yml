@@ -31,13 +31,12 @@ jobs:
       - run:
           name: Build WASM
           command: pnpm build:wasm:dev
-      - run:
-          name: Build TypeScript
-          command: pnpm build:ts
       - persist_to_workspace:
           root: .
           paths:
             - dist/
+      - store_artifacts:
+          path: dist/
 
   release:
     executor: golang-node
