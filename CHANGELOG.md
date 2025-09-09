@@ -1,5 +1,11 @@
 # sshclient-wasm
 
+## 0.1.3
+
+### Patch Changes
+
+- e3715f0: Fix an issue with vite configuration that prevented WASM file from being included.
+
 ## 0.1.2
 
 ### Patch Changes
