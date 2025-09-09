@@ -1,5 +1,11 @@
 # sshclient-wasm
 
+## 0.1.4
+
+### Patch Changes
+
+- c031715: Skip validation during publish phase
+
 ## 0.1.3
 
 ### Patch Changes
