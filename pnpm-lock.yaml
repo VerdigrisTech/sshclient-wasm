@@ -37,7 +37,7 @@ importers:
         specifier: ^5.0.0
         version: 5.4.21(@types/node@20.19.13)
       vite-plugin-dts:
-        specifier: ^3.7.0
+        specifier: ^3.9.1
         version: 3.9.1(@types/node@20.19.13)(rollup@4.52.5)(typescript@5.9.2)(vite@5.4.21(@types/node@20.19.13))
       vitest:
         specifier: ^1.2.0
