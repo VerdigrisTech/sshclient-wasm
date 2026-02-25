@@ -62,7 +62,7 @@
     "url": "https://github.com/VerdigrisTech/sshclient-wasm.git"
   },
   "devDependencies": {
-    "@goreleaser/goreleaser": "^2.9.0",
+    "@goreleaser/goreleaser": "^2.14.1",
     "@types/node": "^20.11.24",
     "@types/protobufjs": "^6.0.0",
     "protobufjs-cli": "^1.2.0",
