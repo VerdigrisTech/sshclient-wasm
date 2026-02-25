@@ -62,7 +62,7 @@
     "url": "https://github.com/VerdigrisTech/sshclient-wasm.git"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.6",
+    "@changesets/cli": "^2.29.8",
     "@changesets/types": "^6.1.0",
     "@goreleaser/goreleaser": "^2.14.1",
     "@types/node": "^20.11.24",
