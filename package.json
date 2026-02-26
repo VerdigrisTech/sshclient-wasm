@@ -7,24 +7,24 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs.js"
     },
     "./next": {
+      "types": "./dist/next.d.ts",
       "import": "./dist/next.esm.js",
-      "require": "./dist/next.cjs.js",
-      "types": "./dist/next.d.ts"
+      "require": "./dist/next.cjs.js"
     },
     "./vite": {
+      "types": "./dist/vite.d.ts",
       "import": "./dist/vite.esm.js",
-      "require": "./dist/vite.cjs.js",
-      "types": "./dist/vite.d.ts"
+      "require": "./dist/vite.cjs.js"
     },
     "./react": {
+      "types": "./dist/react.d.ts",
       "import": "./dist/react.esm.js",
-      "require": "./dist/react.cjs.js",
-      "types": "./dist/react.d.ts"
+      "require": "./dist/react.cjs.js"
     },
     "./package.json": "./package.json"
   },
@@ -70,7 +70,7 @@
     "protobufjs-cli": "^1.2.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.0",
-    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "^1.2.0"
   },
   "engines": {
