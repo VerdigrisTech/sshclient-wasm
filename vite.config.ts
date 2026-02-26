@@ -14,7 +14,7 @@ export default defineConfig(({ command, mode }) => {
       publicDir: 'public', // Serve files from public directory
       resolve: {
         alias: {
-          '/lib': resolve(__dirname, 'lib')
+          '/lib': resolve(import.meta.dirname, 'lib')
         }
       }
     };
@@ -27,10 +27,10 @@ export default defineConfig(({ command, mode }) => {
         emptyOutDir: false,
         lib: {
           entry: {
-            index: resolve(__dirname, 'lib/index.ts'),
-            next: resolve(__dirname, 'lib/next.ts'),
-            vite: resolve(__dirname, 'lib/vite.ts'),
-            react: resolve(__dirname, 'lib/react.ts')
+            index: resolve(import.meta.dirname, 'lib/index.ts'),
+            next: resolve(import.meta.dirname, 'lib/next.ts'),
+            vite: resolve(import.meta.dirname, 'lib/vite.ts'),
+            react: resolve(import.meta.dirname, 'lib/react.ts')
           },
           name: 'SSHClient',
           fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'esm' : format}.js`,
