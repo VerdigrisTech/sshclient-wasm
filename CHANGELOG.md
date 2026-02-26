@@ -1,5 +1,11 @@
 # sshclient-wasm
 
+## 0.1.5
+
+### Patch Changes
+
+- c927eba: Upgrade protobufjs to v8 and protobufjs-cli to v2. Remove deprecated @types/protobufjs.
+
 ## 0.1.4
 
 ### Patch Changes
